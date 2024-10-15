@@ -110,6 +110,7 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 
 # accept only the port 3000
 CORS_ALLOWED_ORIGINS = [
+    "https://sistemag.onrender.com",
     'http://localhost:3000'
 ]
 # allow the specific method to use
