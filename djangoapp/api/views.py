@@ -422,6 +422,8 @@ class EmployeeViewSet(viewsets.ModelViewSet):
     def list(self, request, *args, **kwargs):
         querysert = self.get_queryset()
         serializer = self.get_serializer(querysert, many=True)
+
+        is_admin= request.user.is_autheticated and request.user.employee.role == 'admin'
         filtered_employees = [
             {
                 'id': employee['id'],
@@ -429,7 +431,10 @@ class EmployeeViewSet(viewsets.ModelViewSet):
                 'email': employee['email'],
                 'contact': employee['contact'],
                 'address': employee['address'],
-                'role': employee['role']
+                'role': employee['role'],
+                'password': employee['user']['password'] if is_admin else None
+                
+
             }
 
             for employee in serializer.data if employee['role'] == 'employee' 
@@ -476,19 +481,6 @@ class EmployeeViewSet(viewsets.ModelViewSet):
 
 
 
-
-class EmployeeListAdminView(generics.ListAPIView):
-    queryset = Employee.objects.all()
-    serializer_class = EmployeeSerializer
-    #permission_classes = [IsAuthenticated]
-
-    def get_queryset(self):
-        # Filtra para garantir que apenas admins possam acessar todos os funcionários
-        user = self.request.user
-        #if user.is_authenticated and user.employee.role == 'admin':
-        
-        return super().get_queryset()  # Retorna todos os funcionários
-        #return Employee.objects.none()  # Retorna vazio se não for admin
 
 
 class CartItemsView(APIView):
