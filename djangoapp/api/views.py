@@ -476,6 +476,20 @@ class EmployeeViewSet(viewsets.ModelViewSet):
 
 
 
+
+class EmployeeListAdminView(generics.ListAPIView):
+    queryset = Employee.objects.all()
+    serializer_class = EmployeeSerializer
+    #permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        # Filtra para garantir que apenas admins possam acessar todos os funcionários
+        user = self.request.user
+        if user.is_authenticated and user.employee.role == 'admin':
+            return super().get_queryset()  # Retorna todos os funcionários
+        return Employee.objects.none()  # Retorna vazio se não for admin
+
+
 class CartItemsView(APIView):
     permission_classes = [IsAuthenticated]
 

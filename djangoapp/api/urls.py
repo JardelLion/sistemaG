@@ -14,7 +14,8 @@ from .views import (
     CustomTokenObtainPairView,
     SalesByEmployee,
     TotalStockValueView,
-    TotalSalesValueView
+    TotalSalesValueView,
+    EmployeeListAdminView
   
    
 )
@@ -39,6 +40,7 @@ urlpatterns = [
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'), # Endpoint para atualizar token
     path('total-stock-value/', TotalStockValueView.as_view(), name='total-stock-value'),
     path('total-sales/', TotalSalesValueView.as_view(), name='total-sales-value'),
+    path('employees-view-admin/', EmployeeListAdminView.as_view(), name='employee-list-admin'),
     
 ]
 

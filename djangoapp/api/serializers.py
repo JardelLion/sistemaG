@@ -60,6 +60,18 @@ class EmployeeSerializer(serializers.ModelSerializer):
 
         return employee
 
+    def to_representation(self, instance):
+        """Personaliza a representação do objeto."""
+        representation = super().to_representation(instance)
+        
+        # Adiciona a senha apenas para funcionários com a função de admin
+        request = self.context.get('request')
+        if request.user.is_authenticated and request.user.employee.role == 'admin':
+            representation['password'] = self.initial_data.get('password')  # Exibir a senha
+
+        return representation
+
+
 
 
 
