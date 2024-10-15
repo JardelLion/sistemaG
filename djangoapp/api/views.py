@@ -417,7 +417,7 @@ class CustomTokenObtainPairView(TokenObtainPairView):
 class EmployeeViewSet(viewsets.ModelViewSet):
     queryset = Employee.objects.all()
     serializer_class = EmployeeSerializer
-    #permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated]
 
     def list(self, request, *args, **kwargs):
         querysert = self.get_queryset()
