@@ -110,8 +110,7 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 
 # accept only the port 3000
 CORS_ALLOWED_ORIGINS = [
-    'http://localhost:3000',
-    'http://localhost:5500'
+    'http://localhost:3000'
 ]
 # allow the specific method to use
 CORS_ALLOW_METHODS = [
