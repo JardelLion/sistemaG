@@ -422,8 +422,7 @@ class EmployeeViewSet(viewsets.ModelViewSet):
     def list(self, request, *args, **kwargs):
         querysert = self.get_queryset()
         serializer = self.get_serializer(querysert, many=True)
-
-        is_admin= request.user.is_autheticated and request.user.employee.role == 'admin'
+        
         filtered_employees = [
             {
                 'id': employee['id'],
@@ -431,9 +430,7 @@ class EmployeeViewSet(viewsets.ModelViewSet):
                 'email': employee['email'],
                 'contact': employee['contact'],
                 'address': employee['address'],
-                'role': employee['role'],
-                'password': employee['user']['password'] if is_admin else None
-                
+                'role': employee['role']
 
             }
 
