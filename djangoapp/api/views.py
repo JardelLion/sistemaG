@@ -102,14 +102,14 @@ class StockManagerViewSet(viewsets.ModelViewSet):
 
     def create(self, request, *args, **kwargs):
         # Verifica se o usuário está autenticado
-        if not request.user.is_authenticated:
-            return Response({"error": "você precisa estar autenticado para realizar esta ação."}, status=status.HTTP_403_FORBIDDEN)
+        # if not request.user.is_authenticated:
+        #     return Response({"error": "você precisa estar autenticado para realizar esta ação."}, status=status.HTTP_403_FORBIDDEN)
 
-        # Obtém o funcionário associado ao usuário autenticado
-        try:
-            employee = Employee.objects.get(user=request.user)
-        except Employee.DoesNotExist:
-            return Response({"error": "Funcionário não encontrado."}, status=status.HTTP_404_NOT_FOUND)
+        # # Obtém o funcionário associado ao usuário autenticado
+        # try:
+        #     employee = Employee.objects.get(user=request.user)
+        # except Employee.DoesNotExist:
+        #     return Response({"error": "Funcionário não encontrado."}, status=status.HTTP_404_NOT_FOUND)
 
         employee = Employee.objects.get(user=request.user)
         # Coleta os dados da requisição
