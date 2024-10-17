@@ -126,7 +126,7 @@ class Notification(models.Model):
     employee  = models.ForeignKey(Employee, on_delete=models.CASCADE, 
                                   related_name='notifications')
     message = models.CharField(max_length=255)
-    is_reade = models.BooleanField(default=False)
+    is_read = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
