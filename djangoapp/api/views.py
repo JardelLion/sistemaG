@@ -163,6 +163,34 @@ class StockManagerViewSet(viewsets.ModelViewSet):
         stock_item.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
+    def update(self, request, *args, **kwargs):
+        # Obtém o ID do produto para atualização
+        product_id = kwargs.get('pk')
+
+        # Tenta obter o item de estoque existente
+        try:
+            stock_item = Stock.objects.get(product_id=product_id)
+        except Stock.DoesNotExist:
+            return Response({"error": "Produto não encontrado no estoque."}, status=status.HTTP_404_NOT_FOUND)
+
+        # Coleta os dados da requisição para atualização
+        quantity = request.data.get('quantity', stock_item.quantity)
+        acquisition_value = request.data.get('acquisition_value', stock_item.acquisition_value)
+        #description = request.data.get('description', stock_item.description)
+
+        # Atualiza os campos do item de estoque
+        stock_item.quantity = quantity
+        stock_item.acquisition_value = acquisition_value
+        #stock_item.description = description
+        stock_item.save()
+
+        # Serializa os dados atualizados
+        serializer = self.get_serializer(stock_item)
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+
 
 class TotalStockValueView(views.APIView):
     permission_classes = [IsAuthenticated]
