@@ -687,3 +687,30 @@ class SalesByEmployee(viewsets.ViewSet):
             })
 
         return Response(sales_data, status=status.HTTP_200_OK)
+
+ 
+from rest_framework.decorators import api_view
+from .models import Notification
+from .serializers import NotificationSerializer
+
+@api_view(['GET'])
+def employee_notifications(request):
+    employee = request.user.employee
+    notifications = Notification.object.filter(employee=employee, is_read=False)
+    serializer = NotificationSerializer(notifications, many=True)
+    return Response(serializer.data)
+
+@api_view(['PATCH'])
+def mark_as_read(request, notification_id):
+    try:
+        notification = Notification.objects.get(id=notification_id, 
+                                                employee=request.user.employee)
+    except Notification.DoesNotExist:
+        return Response({
+            'error': "Notificação não encontrada."
+        }, status=status.HTTP_404_NOT_FOUND)
+    
+    notification.is_read = True 
+    notification.save()
+    serializer = NotificationSerializer(notification)
+    return Response(serializer.data)

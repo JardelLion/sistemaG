@@ -119,6 +119,21 @@ class Employee(models.Model):
         if not re.match(r'\d{9,15}$', self.contact):
             raise ValidationError("O campo de contato deve conter apenas números e ter entre 9 a 15 dígitos.")
 
+
+
+class Notification(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    employee  = models.ForeignKey(Employee, on_delete=models.CASCADE, 
+                                  related_name='notifications')
+    message = models.CharField(max_length=255)
+    is_reade = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f'Notificação para {self.employee.name}: {self.message}'
+
+
+
 class LoginActivity(models.Model):
     user = models.ForeignKey('auth.User', on_delete=models.CASCADE)
     timestamp = models.DateTimeField(auto_now_add=True)

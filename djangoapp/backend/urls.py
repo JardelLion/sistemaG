@@ -34,6 +34,9 @@ urlpatterns = [
     path('api/', include("api.urls")),
     path('api/employee/<uuid:id>/sales/', v.SalesByEmployeeWithIdViewSet.as_view({'get': 'list'}), name='sales-by-employee'),
 
+    path('api/notifications/', v.employee_notifications, name='employee_notifications'),
+    path('api/notifications/<uuid:notification_id>/read/', v.mark_as_read, name='mark_as_read'),
+
 
 
 
