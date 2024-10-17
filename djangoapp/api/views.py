@@ -696,7 +696,7 @@ from .serializers import NotificationSerializer
 @api_view(['GET'])
 def employee_notifications(request):
     employee = request.user.employee
-    notifications = Notification.object.filter(employee=employee, is_read=False)
+    notifications = Notification.objects.filter(employee=employee, is_read=False)
     serializer = NotificationSerializer(notifications, many=True)
     return Response(serializer.data)
 
