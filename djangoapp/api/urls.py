@@ -15,7 +15,7 @@ from .views import (
     SalesByEmployee,
     TotalStockValueView,
     TotalSalesValueView,
-   
+    LoginActivityViewSet
   
    
 )
@@ -33,6 +33,8 @@ router.register(r'sales', SaleViewSet)
 router.register(r'sales-by-employee', SalesByEmployee, basename='sales-by-employee')
 router.register(r'aggregate-sales-by-date', AggregateSalesByDateViewSet, basename='aggregate-sales-by-date')
 router.register(r'action-history', ActionHistoryViewSet, basename='action-history')
+router.register(r'login-activities', LoginActivityViewSet, basename='log-activities')
+
 
 # URLs adicionais
 urlpatterns = [
@@ -40,7 +42,7 @@ urlpatterns = [
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'), # Endpoint para atualizar token
     path('total-stock-value/', TotalStockValueView.as_view(), name='total-stock-value'),
     path('total-sales/', TotalSalesValueView.as_view(), name='total-sales-value'),
-   
+    
 ]
 
 # Adiciona as URLs do roteador ao urlpatterns

@@ -102,14 +102,14 @@ class StockManagerViewSet(viewsets.ModelViewSet):
 
     def create(self, request, *args, **kwargs):
         # Verifica se o usuário está autenticado
-        # if not request.user.is_authenticated:
-        #     return Response({"error": "você precisa estar autenticado para realizar esta ação."}, status=status.HTTP_403_FORBIDDEN)
+        if not request.user.is_authenticated:
+            return Response({"error": "você precisa estar autenticado para realizar esta ação."}, status=status.HTTP_403_FORBIDDEN)
 
-        # # Obtém o funcionário associado ao usuário autenticado
-        # try:
-        #     employee = Employee.objects.get(user=request.user)
-        # except Employee.DoesNotExist:
-        #     return Response({"error": "Funcionário não encontrado."}, status=status.HTTP_404_NOT_FOUND)
+        # Obtém o funcionário associado ao usuário autenticado
+        try:
+            employee = Employee.objects.get(user=request.user)
+        except Employee.DoesNotExist:
+            return Response({"error": "Funcionário não encontrado."}, status=status.HTTP_404_NOT_FOUND)
 
         employee = Employee.objects.get(user=request.user)
         # Coleta os dados da requisição
@@ -149,6 +149,19 @@ class StockManagerViewSet(viewsets.ModelViewSet):
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+    def destroy(self, request, *args, **kwargs):
+        # Obtém o ID do produto a ser excluído
+        product_id = kwargs.get('pk')
+
+        # Tenta obter o objeto de estoque relacionado ao produto
+        try:
+            stock_item = Stock.objects.get(product_id=product_id)
+        except Stock.DoesNotExist:
+            return Response({"error": "Produto não encontrado no estoque."}, status=status.HTTP_404_NOT_FOUND)
+
+        # Remove o item do estoque
+        stock_item.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class TotalStockValueView(views.APIView):
@@ -286,7 +299,7 @@ class CartViewSet(viewsets.ViewSet):
 class SaleViewSet(viewsets.ModelViewSet):
     queryset = Sale.objects.all()
     serializer_class = SaleSerializer
-    permission_classes = [IsAuthenticated]
+    #permission_classes = [IsAuthenticated]
 
     def create(self, request, *args, **kwargs):
         # Supondo que a requisição contém os dados necessários para a venda
@@ -329,7 +342,7 @@ class SaleViewSet(viewsets.ModelViewSet):
 from rest_framework.exceptions import NotFound
 
 class SalesByEmployeeWithIdViewSet(viewsets.ViewSet):
-    permission_classes = [IsAuthenticated]
+    #permission_classes = [IsAuthenticated]
 
     def list(self, request, id=None):
         # Se o ID do funcionário não for fornecido, retorne um erro
@@ -351,17 +364,24 @@ class SalesByEmployeeWithIdViewSet(viewsets.ViewSet):
                 'id',  # ID da venda
                 'product__name',  # Nome do produto
                 'sale_quantity',  # Quantidade vendida
-                'date'  # Data da venda (supondo que há um campo 'created_at' em Sale)
+                'date',  # Data da venda (supondo que há um campo 'created_at' em Sale)
+                'product__price'
             )
         )
 
+       
+        total_value = 0.0
+
+        for sale in sales:
+            total_value += float(sale['product__price']) * int(sale['sale_quantity']) 
+
         # Retorna as vendas como uma resposta
-        return Response({"employee_id": id, "sales": list(sales)}, status=status.HTTP_200_OK)
+        return Response({"employee_id": id, "sales": list(sales), 'total_sales': total_value}, status=status.HTTP_200_OK)
 
 
 
 class AggregateSalesByDateViewSet(viewsets.ViewSet):
-    permission_classes = [IsAuthenticated]
+    #permission_classes = [IsAuthenticated]
 
     def list(self, request):
         sales = (
@@ -384,33 +404,59 @@ class ActionHistoryViewSet(viewsets.ModelViewSet):
         return ActionHistory.objects.filter(employee_id=employee_id) if employee_id else ActionHistory.objects.all()
 
 
-
+from .models import LoginActivity
 # Token Authentication
 class CustomTokenObtainPairView(TokenObtainPairView):
     permission_classes = [AllowAny]
 
     def post(self, request, *args, **kwargs):
+        # Tente obter o token de autenticação
         response = super().post(request, *args, **kwargs)
 
-        user = authenticate(username=request.data['username'], password=request.data['password'])
-        
+        # Verifique se o usuário foi autenticado
+        user = authenticate(username=request.data.get('username'), password=request.data.get('password'))
+
         if user:
-            try:
-                employee = Employee.objects.get(user=user)
+            LoginActivity.objects.create(
+                user=user,
                 
+                status='success',
+                ip_address=request.META.get("REMOTE_ADDR")
+
+            )
+            try:
+                # Tente obter o funcionário associado ao usuário
+                employee = Employee.objects.get(user=user)
+
+                # Adicione os dados do funcionário à resposta
                 response.data['employee'] = {
                     'id': employee.id,
                     'role': employee.role
                 }
-               
+                response.data['error'] = None  # Remova qualquer mensagem de erro anterior
             except Employee.DoesNotExist:
                 response.data['employee'] = None
                 response.data['error'] = "Dados do funcionário não encontrados."
+                response.status_code = status.HTTP_404_NOT_FOUND  # Alterado para 404, se preferir
+
         else:
+            LoginActivity.objects.create(
+                user=None,
+                status='failure',
+                id_address=request.META.get("REMOTE_ADDR")
+            )
+            response.data['employee'] = None
             response.data['error'] = "Credenciais inválidas."
             response.status_code = status.HTTP_401_UNAUTHORIZED
 
         return response
+
+from .serializers import LoginactivitySerializer
+
+class LoginActivityViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = LoginActivity.objects.all()
+    serializer_class = LoginactivitySerializer
+
 
 
 # ViewSets
@@ -418,11 +464,13 @@ class EmployeeViewSet(viewsets.ModelViewSet):
     queryset = Employee.objects.all()
     serializer_class = EmployeeSerializer
     #permission_classes = [IsAuthenticated]
+    
 
     def list(self, request, *args, **kwargs):
         querysert = self.get_queryset()
         serializer = self.get_serializer(querysert, many=True)
-        
+        current_employee = request.user.employee
+        is_admin= current_employee.role == 'admin'
         filtered_employees = [
             {
                 'id': employee['id'],
@@ -430,8 +478,8 @@ class EmployeeViewSet(viewsets.ModelViewSet):
                 'email': employee['email'],
                 'contact': employee['contact'],
                 'address': employee['address'],
+                'username': employee['username'] if is_admin else None,
                 'role': employee['role']
-
             }
 
             for employee in serializer.data if employee['role'] == 'employee' 
@@ -478,8 +526,6 @@ class EmployeeViewSet(viewsets.ModelViewSet):
 
 
 
-
-
 class CartItemsView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -513,13 +559,6 @@ class CartItemsView(APIView):
             return Response({"error": "Funcionário não encontrado."}, status=status.HTTP_404_NOT_FOUND)
         except Cart.DoesNotExist:
             return Response({"error": "Carrinho não encontrado."}, status=status.HTTP_404_NOT_FOUND)
-
-
-
-
-
-
-
 
 
 

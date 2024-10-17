@@ -119,6 +119,16 @@ class Employee(models.Model):
         if not re.match(r'\d{9,15}$', self.contact):
             raise ValidationError("O campo de contato deve conter apenas números e ter entre 9 a 15 dígitos.")
 
+class LoginActivity(models.Model):
+    user = models.ForeignKey('auth.User', on_delete=models.CASCADE)
+    timestamp = models.DateTimeField(auto_now_add=True)
+    status = models.CharField(max_length=20)
+    ip_address = models.GenericIPAddressField()
+
+
+    def __str__(self):
+        return f"{self.user.username} - {self.status} - {self.timestamp}"
+
 
 class Cart(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)

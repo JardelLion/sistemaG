@@ -9,7 +9,7 @@ from rest_framework import serializers
 from .models import Employee
 from django.utils.translation import gettext_lazy as _
 from django.contrib.auth.models import User
-
+from .models import LoginActivity
 
 class EmployeeSerializer(serializers.ModelSerializer):
     username = serializers.CharField(source='user.username')
@@ -66,8 +66,6 @@ class EmployeeSerializer(serializers.ModelSerializer):
 
 
 
-
-
 class ProductSerializer(serializers.ModelSerializer):
     description = serializers.CharField(required=False)
 
@@ -100,6 +98,13 @@ class SaleSerializer(serializers.ModelSerializer):
     class Meta:
         model = Sale
         fields = "__all__"
+
+class LoginactivitySerializer(serializers.ModelSerializer):
+    username = serializers.CharField(source='user.username', read_only=True)
+    class Meta:
+        model = LoginActivity 
+        fields = "__all__"
+        extra_kwargs = {'username': {'read_only': True}} 
 
 
 class StockManagerSerializer(serializers.ModelSerializer):
