@@ -317,55 +317,59 @@ class SaleViewSet(viewsets.ModelViewSet):
     queryset = Sale.objects.all()
     serializer_class = SaleSerializer
 
+
     def create(self, request, *args, **kwargs):
         employee_id = request.data.get("employee")
         product_id = request.data.get("product")
         sale_quantity = request.data.get("sale_quantity")
 
         try:
-            # Obter o produto e o estoque
+            # Verifica se o produto existe
             product = Product.objects.get(id=product_id)
+        except Product.DoesNotExist:
+            return Response({"error": "Produto não encontrado."}, status=status.HTTP_404_NOT_FOUND)
+
+        try:
+            # Verifica se o estoque existe para o produto
             stock = Stock.objects.get(product=product)
+        except Stock.DoesNotExist:
+            return Response({"error": "Estoque não encontrado para este produto."}, status=status.HTTP_404_NOT_FOUND)
 
-            # Verifica se há estoque suficiente
-            if stock.quantity < int(sale_quantity):
-                return Response({"error": "Estoque insuficiente para esta venda."}, status=status.HTTP_400_BAD_REQUEST)
+        # Debug: Mostra a quantidade em estoque
+        print(f"Quantidade disponível no estoque: {stock.quantity}")
+        print(f"Quantidade a ser vendida: {sale_quantity}")
 
-            # Atualiza o estoque subtraindo a quantidade vendida
-            stock.quantity -= int(sale_quantity)
-            stock.save()
+        # Verifica se a quantidade de venda é válida
+        if sale_quantity > stock.quantity:
+            return Response({"error": "A quantidade vendida excede o estoque disponível."}, status=status.HTTP_400_BAD_REQUEST)
 
-            # Cria a venda
+        # Aqui você pode criar a venda
+        try:
             sale = Sale.objects.create(
                 employee_id=employee_id,
-                product_id=product_id,
+                product=product,
                 sale_quantity=sale_quantity,
-                # Adicione outros campos necessários
             )
 
-            # Esvazia o carrinho (se necessário)
-            self.clear_cart(request)
+            # Diminui a quantidade no estoque
+            stock.quantity -= sale_quantity
+            stock.save()  # Salva as alterações no estoque
 
             return Response({
                 "message": "Venda realizada com sucesso.",
                 "sale_id": sale.id
             }, status=status.HTTP_201_CREATED)
 
-        except Product.DoesNotExist:
-            return Response({"error": "Produto não encontrado."}, status=status.HTTP_404_NOT_FOUND)
-        except Stock.DoesNotExist:
-            return Response({"error": "Estoque não encontrado para este produto."}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+
 
     def clear_cart(self, request):
         """Esvazia o carrinho do usuário"""
         cart = Cart.objects.get(user=request.user)
         CartItem.objects.filter(cart=cart).delete()
         return Response({'message': 'Carrinho esvaziado com sucesso'}, status=status.HTTP_200_OK)
-
-
-
 
 
 
