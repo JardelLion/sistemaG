@@ -111,7 +111,7 @@ class StockManagerSerializer(serializers.ModelSerializer):
    
     class Meta:
         model = Stock
-        fields = ['product', 'quantity', 'acquisition_value', 'responsible_user'] 
+        fields = ['product', 'quantity', 'acquisition_value', 'responsible_user', 'available'] 
 
     def create(self, validated_data):
         return Stock.objects.create(**validated_data)

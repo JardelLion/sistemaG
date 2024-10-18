@@ -98,7 +98,8 @@ class StockManagerViewSet(viewsets.ModelViewSet):
                 'product_id': item.product.id,
                 'product_name': item.product.name,  # Acessa o nome do produto
                 'price': item.product.price,
-                'quantity': item.quantity,  # Quantidade no estoque
+                'quantity': item.quantity,
+                'is_available': item.available,  # Quantidade no estoque
                 'acquisition_value': item.acquisition_value,
                 'responsible_user': item.responsible_user.name,  # Acessa o nome do responsável
             })
@@ -123,6 +124,7 @@ class StockManagerViewSet(viewsets.ModelViewSet):
         quantity = request.data.get('quantity')
         acquisition_value = request.data.get('acquisition_value', 0)
         description = request.data.get('description', '')
+        available = request.data.get('is_available')
 
         # Verifica se o produto já está no estoque
         try:
@@ -142,6 +144,7 @@ class StockManagerViewSet(viewsets.ModelViewSet):
             'product': product.id,
             'quantity': quantity,
             'acquisition_value': acquisition_value,
+            'available': available,
             'description': description,
             'responsible_user': employee.id,  # O responsável é o funcionário autenticado
         }
