@@ -616,7 +616,7 @@ class CartItemsView(APIView):
 
 # Employee Dashboard
 class EmployeeDashboardView(APIView):
-    permission_classes = [IsAuthenticated]
+    #permission_classes = [IsAuthenticated]
 
     def get(self, request, id):
         try:
