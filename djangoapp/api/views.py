@@ -269,6 +269,12 @@ class CartViewSet(viewsets.ViewSet):
             if stock_manager_entry is None:
                 return Response({"error": "Produto não está disponível em estoque."}, status=status.HTTP_404_NOT_FOUND)
 
+            
+             # Verificar se o produto está disponível
+            if not stock_manager_entry.available:
+                return Response({"error": "Produto não está disponível para adicionar ao carrinho."}, status=status.HTTP_400_BAD_REQUEST)
+
+            
             available_quantity = stock_manager_entry.quantity  # Aqui estamos pegando a quantidade do estoque
 
             # Verificar se a quantidade é válida
