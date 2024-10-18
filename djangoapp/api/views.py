@@ -307,37 +307,29 @@ class CartViewSet(viewsets.ViewSet):
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 class SaleViewSet(viewsets.ModelViewSet):
     queryset = Sale.objects.all()
     serializer_class = SaleSerializer
-    #permission_classes = [IsAuthenticated]
 
     def create(self, request, *args, **kwargs):
-        # Supondo que a requisição contém os dados necessários para a venda
         employee_id = request.data.get("employee")
         product_id = request.data.get("product")
         sale_quantity = request.data.get("sale_quantity")
 
-        # Aqui você deve adicionar a lógica para criar a venda
         try:
-            # Criar a venda
+            # Obter o produto e o estoque
+            product = Product.objects.get(id=product_id)
+            stock = Stock.objects.get(product=product)
+
+            # Verifica se há estoque suficiente
+            if stock.quantity < int(sale_quantity):
+                return Response({"error": "Estoque insuficiente para esta venda."}, status=status.HTTP_400_BAD_REQUEST)
+
+            # Atualiza o estoque subtraindo a quantidade vendida
+            stock.quantity -= int(sale_quantity)
+            stock.save()
+
+            # Cria a venda
             sale = Sale.objects.create(
                 employee_id=employee_id,
                 product_id=product_id,
@@ -345,7 +337,7 @@ class SaleViewSet(viewsets.ModelViewSet):
                 # Adicione outros campos necessários
             )
 
-            # Após criar a venda, esvaziar o carrinho
+            # Esvazia o carrinho (se necessário)
             self.clear_cart(request)
 
             return Response({
@@ -353,6 +345,10 @@ class SaleViewSet(viewsets.ModelViewSet):
                 "sale_id": sale.id
             }, status=status.HTTP_201_CREATED)
 
+        except Product.DoesNotExist:
+            return Response({"error": "Produto não encontrado."}, status=status.HTTP_404_NOT_FOUND)
+        except Stock.DoesNotExist:
+            return Response({"error": "Estoque não encontrado para este produto."}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -361,6 +357,11 @@ class SaleViewSet(viewsets.ModelViewSet):
         cart = Cart.objects.get(user=request.user)
         CartItem.objects.filter(cart=cart).delete()
         return Response({'message': 'Carrinho esvaziado com sucesso'}, status=status.HTTP_200_OK)
+
+
+
+
+
 
 
 
