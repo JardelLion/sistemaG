@@ -31,23 +31,28 @@ class ProductViewSet(viewsets.ModelViewSet):
         queryset = self.get_queryset()
         serializer = self.get_serializer(queryset, many=True)
 
-        # Para cada produto, buscar a quantidade no estoque associado
+        # Para cada produto, buscar a quantidade no próprio produto e o valor de aquisição
         filtered_products = []
         for product in serializer.data:
             try:
-                stock = Stock.objects.get(product_id=product['id'])  # Busca a quantidade no estoque
-                stock_quantity = stock.quantity
-            except Stock.DoesNotExist:
-                stock_quantity = 0  # Caso o produto não tenha um registro de estoque, assume 0
+                # Aqui estamos pegando a quantidade do próprio produto
+                product_instance = Product.objects.get(id=product['id'])
+                product_quantity = product_instance.quantity  # Quantidade no próprio produto
+                acquisition_value = product_instance.acquisition_value  # Valor de aquisição do produto
+            except Product.DoesNotExist:
+                product_quantity = 0  # Caso o produto não tenha uma quantidade definida
+                acquisition_value = 0.00  # Valor de aquisição padrão
 
             filtered_products.append({
                 'id': product['id'],
                 'name': product['name'],
-                'stock_quantity': stock_quantity,  # Quantidade no estoque
+                'quantity': product_quantity,  # Quantidade no próprio produto
+                'acquisition_value': acquisition_value,  # Valor de aquisição
                 'price': product['price']
             })
 
         return Response(filtered_products)
+
 
     @action(detail=False, methods=['post'], url_path='create')
     def create_product(self, request):
