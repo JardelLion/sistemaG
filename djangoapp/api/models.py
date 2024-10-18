@@ -47,7 +47,6 @@ class Stock(models.Model):
 
         super().save(*args, **kwargs)
 
-
 class Sale(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
@@ -60,8 +59,12 @@ class Sale(models.Model):
 
     def save(self, *args, **kwargs):
         # Verifica se há estoque suficiente
-        stock = Stock.objects.get(product=self.product)
-        
+        try:
+            stock = Stock.objects.get(product=self.product)
+        except Stock.DoesNotExist:
+            raise ValueError("Produto não encontrado no estoque.")
+
+        # Permite a venda se a quantidade a ser vendida for menor ou igual à quantidade disponível
         if self.sale_quantity > stock.quantity:
             raise ValueError("A quantidade vendida excede o estoque disponível.")
 
@@ -71,6 +74,7 @@ class Sale(models.Model):
 
         # Chama o método save padrão para registrar a venda
         super().save(*args, **kwargs)
+
 
 
 class Employee(models.Model):
