@@ -354,11 +354,14 @@ class SaleViewSet(viewsets.ModelViewSet):
             # Diminui a quantidade no estoque
             stock.quantity -= sale_quantity
             stock.save()  # Salva as alterações no estoque
+            self.clear_cart(request)
 
             return Response({
                 "message": "Venda realizada com sucesso.",
                 "sale_id": sale.id
             }, status=status.HTTP_201_CREATED)
+        
+            
 
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
