@@ -168,9 +168,23 @@ class StockManagerViewSet(viewsets.ModelViewSet):
         except Stock.DoesNotExist:
             return Response({"error": "Produto não encontrado no estoque."}, status=status.HTTP_404_NOT_FOUND)
 
+        quantity_to_return = stock_item.quantity
         # Remove o item do estoque
         stock_item.delete()
+
+        try:
+            product = Product.objects.get(id=product_id)
+            product.quantity += quantity_to_return
+            product.save()
+        
+        except Product.DoesNotExist:
+            return Response({"error": "Produto não encontrado"}, status=status.HTTP_404_NOT_FOUND)
+
+
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+
 
     def update(self, request, *args, **kwargs):
         # Obtém o ID do produto para atualização
