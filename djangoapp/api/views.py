@@ -227,7 +227,6 @@ class TotalSalesValueView(APIView):
             for sale in sales:
                 total_sales_value += sale.sale_quantity * sale.product.price
                 
-
             return Response({"total_sales_value": total_sales_value}, status=status.HTTP_200_OK)
 
         except Exception as e:
@@ -338,6 +337,11 @@ class SaleViewSet(viewsets.ModelViewSet):
         # Debug: Mostra a quantidade em estoque
         print(f"Quantidade disponível no estoque: {stock.quantity}")
         print(f"Quantidade a ser vendida: {sale_quantity}")
+
+        # Verifica se o produto está disponível
+        if not stock.available:
+            return Response({"error": f"O produto {product.name} não está disponível para venda."}, status=status.HTTP_400_BAD_REQUEST)
+
 
         # Verifica se a quantidade de venda é válida
         if sale_quantity > stock.quantity:

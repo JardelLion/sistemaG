@@ -29,6 +29,7 @@ class Stock(models.Model):
     product = models.OneToOneField(Product, on_delete=models.CASCADE)  # Cada produto tem um estoque
     quantity = models.PositiveIntegerField(default=0)  # Quantidade no estoque
     acquisition_value = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)  # Valor de aquisição
+    available = models.BooleanField(default=False) 
     date_added = models.DateTimeField(auto_now_add=True)
     responsible_user = models.ForeignKey('Employee', on_delete=models.CASCADE)  # Usuário responsável
 
@@ -63,6 +64,11 @@ class Sale(models.Model):
             stock = Stock.objects.get(product=self.product)
         except Stock.DoesNotExist:
             raise ValueError("Produto não encontrado no estoque.")
+        
+         # Verifica se o produto está disponível
+        if not stock.available:
+            raise ValueError(f"O produto {self.product.name} não está disponível para venda.")
+
 
         # Permite a venda se a quantidade a ser vendida for menor ou igual à quantidade disponível
         if self.sale_quantity > stock.quantity:
