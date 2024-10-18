@@ -46,7 +46,7 @@ class ProductViewSet(viewsets.ModelViewSet):
             filtered_products.append({
                 'id': product['id'],
                 'name': product['name'],
-                'description': product.description,
+                'description': product['description'],
                 'quantity': product_quantity,  # Quantidade no próprio produto
                 'acquisition_value': acquisition_value,  # Valor de aquisição
                 'price': product['price']
