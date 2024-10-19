@@ -248,6 +248,13 @@ class TotalSalesAndAcquisitionValueView(APIView):
                 total_sales_value += sale.sale_quantity * product.price
                 total_acquisition_value += sale.sale_quantity * product.acquisition_value
 
+
+            total_spend = 0
+            products = Product.objects.all()
+            for product in products:
+                total_spend += product.acquisition_value
+
+
             # Calcula o lucro (profit)
             profit = total_sales_value - total_acquisition_value
 
@@ -261,7 +268,8 @@ class TotalSalesAndAcquisitionValueView(APIView):
                 "total_sales_value": total_sales_value,
                 "total_acquisition_value": total_acquisition_value,
                 "profit": profit,
-                "margin": margin
+                "margin": margin,
+                'total_spend': total_spend
             }, status=status.HTTP_200_OK)
 
         except Exception as e:
