@@ -234,12 +234,12 @@ class TotalProductValueView(views.APIView):
 
 
 
-
 class TotalSalesAndAcquisitionValueView(APIView):
     def get(self, request, *args, **kwargs):
         try:
             total_sales_value = 0
             total_acquisition_value = 0
+            total_spend = 0
 
             # Itera por todas as vendas e calcula o valor total de vendas e de aquisição
             sales = Sale.objects.all()
@@ -248,22 +248,18 @@ class TotalSalesAndAcquisitionValueView(APIView):
                 total_sales_value += sale.sale_quantity * product.price
                 total_acquisition_value += sale.sale_quantity * product.acquisition_value
 
-
-            total_spend = 0
+            # Calcula o total de custos de aquisição de todos os produtos
             products = Product.objects.all()
             for product in products:
                 total_spend += product.acquisition_value
 
-
-            # Calcula o lucro (profit)
-            #profit = total_sales_value - total_acquisition_value
-            profit = total_sales_value - total_spend
-
-            # Verifica se houve vendas para evitar divisão por zero
+            # Calcula o lucro (profit) apenas se houver vendas
             if total_sales_value > 0:
+                profit = total_sales_value - total_spend
                 margin = (profit / total_sales_value) * 100
             else:
-                margin = 0  # Se não houve vendas, a margem é zero
+                profit = 0  # Se não houver vendas, o lucro é zero
+                margin = 0   # E a margem também é zero
 
             return Response({
                 "total_sales_value": total_sales_value,
@@ -275,8 +271,6 @@ class TotalSalesAndAcquisitionValueView(APIView):
 
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
-
 
 
 
