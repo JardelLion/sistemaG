@@ -410,6 +410,8 @@ class SaleViewSet(viewsets.ModelViewSet):
 # sales by employ with id
 from rest_framework.exceptions import NotFound
 from collections import defaultdict
+from operator import itemgetter
+
 class SalesByEmployeeWithIdViewSet(viewsets.ViewSet):
     # permission_classes = [IsAuthenticated]
 
@@ -430,6 +432,7 @@ class SalesByEmployeeWithIdViewSet(viewsets.ViewSet):
             .filter(employee=employee)  # Filtra vendas pelo funcionário
             .select_related('product')   # Assume que há uma relação com Product
             .values(
+                'id',  # ID da venda
                 'product__name',  # Nome do produto
                 'sale_quantity',  # Quantidade vendida
                 'date',  # Data da venda
@@ -438,7 +441,7 @@ class SalesByEmployeeWithIdViewSet(viewsets.ViewSet):
         )
 
         # Dicionário para agrupar as vendas por produto e data
-        sales_summary = defaultdict(lambda: defaultdict(int))  # Chave: produto -> data -> quantidade total
+        sales_summary = defaultdict(lambda: defaultdict(lambda: {'quantity': 0, 'ids': []}))  
         total_value = 0.0
 
         # Itera pelas vendas e agrupa por produto e data
@@ -447,26 +450,32 @@ class SalesByEmployeeWithIdViewSet(viewsets.ViewSet):
             sale_date = sale['date']
             sale_quantity = int(sale['sale_quantity'])
             product_price = float(sale['product__price'])
+            sale_id = sale['id']
 
-            # Agrupa por produto e data, somando as quantidades
-            sales_summary[product_name][sale_date] += sale_quantity
+            # Agrupa por produto e data, somando as quantidades e armazenando os IDs
+            sales_summary[product_name][sale_date]['quantity'] += sale_quantity
+            sales_summary[product_name][sale_date]['ids'].append(sale_id)
 
             # Calcula o valor total da venda
             total_value += product_price * sale_quantity
 
-        # Montar a lista final de vendas agrupadas por produto e data
+        # Montar a lista final de vendas agrupadas por produto e data, incluindo os IDs
         sales_list = []
         for product, dates in sales_summary.items():
-            for date, total_quantity in dates.items():
+            for date, data in dates.items():
                 sales_list.append({
                     'product_name': product,
                     'date': date,
-                    'total_quantity': total_quantity,
-                    'total_value': total_quantity * product_price  # Valor total por produto
+                    'total_quantity': data['quantity'],
+                    'ids': data['ids'],  # Inclui a lista de IDs
+                    'total_value': data['quantity'] * product_price  # Valor total por produto
                 })
 
+        # Ordenar a lista de vendas pela data, do menor para o maior
+        sales_list_sorted = sorted(sales_list, key=itemgetter('date'))
+
         # Retorna as vendas agrupadas como resposta
-        return Response({"employee_id": id, "sales": sales_list, 'total_sales': total_value}, status=status.HTTP_200_OK)
+        return Response({"employee_id": id, "sales": sales_list_sorted, 'total_sales': total_value}, status=status.HTTP_200_OK)
 
 class AggregateSalesByDateViewSet(viewsets.ViewSet):
     #permission_classes = [IsAuthenticated]
