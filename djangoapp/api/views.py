@@ -256,7 +256,8 @@ class TotalSalesAndAcquisitionValueView(APIView):
 
 
             # Calcula o lucro (profit)
-            profit = total_sales_value - total_acquisition_value
+            #profit = total_sales_value - total_acquisition_value
+            profit = total_sales_value - total_spend
 
             # Verifica se houve vendas para evitar divisão por zero
             if total_sales_value > 0:
