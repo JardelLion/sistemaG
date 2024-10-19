@@ -223,9 +223,9 @@ class TotalStockValueView(views.APIView):
         total_value = 0
         
         # Itera sobre todos os itens no estoque
-        stock_items = Stock.objects.all()
-        for stock_item in stock_items:
-            total_value += stock_item.acquisition_value
+        product_items = Product.objects.all()
+        for product_item in product_items:
+            total_value += product_item.acquisition_value
 
 
         return Response({
