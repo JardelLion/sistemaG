@@ -215,7 +215,7 @@ class StockManagerViewSet(viewsets.ModelViewSet):
 
 
 
-class TotalStockValueView(views.APIView):
+class TotalProductValueView(views.APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
@@ -234,20 +234,46 @@ class TotalStockValueView(views.APIView):
 
 
 
-class TotalSalesValueView(APIView):
+
+class TotalSalesAndAcquisitionValueView(APIView):
     def get(self, request, *args, **kwargs):
         try:
             total_sales_value = 0
+            total_acquisition_value = 0
 
-            # Itera por todas as vendas e calcula o valor total
+            # Itera por todas as vendas e calcula o valor total de vendas e de aquisição
             sales = Sale.objects.all()
             for sale in sales:
-                total_sales_value += sale.sale_quantity * sale.product.price
-                
-            return Response({"total_sales_value": total_sales_value}, status=status.HTTP_200_OK)
+                product = sale.product
+                total_sales_value += sale.sale_quantity * product.price
+                total_acquisition_value += sale.sale_quantity * product.acquisition_value
+
+            # Calcula o lucro (profit)
+            profit = total_sales_value - total_acquisition_value
+
+            # Verifica se houve vendas para evitar divisão por zero
+            if total_sales_value > 0:
+                margin = (profit / total_sales_value) * 100
+            else:
+                margin = 0  # Se não houve vendas, a margem é zero
+
+            return Response({
+                "total_sales_value": total_sales_value,
+                "total_acquisition_value": total_acquisition_value,
+                "profit": profit,
+                "margin": margin
+            }, status=status.HTTP_200_OK)
 
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+
+
+
+
+
+
+
 
 
 

@@ -13,8 +13,8 @@ from .views import (
     StockManagerViewSet,
     CustomTokenObtainPairView,
     SalesByEmployee,
-    TotalStockValueView,
-    TotalSalesValueView,
+    TotalProductValueView,
+    TotalSalesAndAcquisitionValueView,
     LoginActivityViewSet
   
    
@@ -40,8 +40,8 @@ router.register(r'login-activities', LoginActivityViewSet, basename='log-activit
 urlpatterns = [
     path('token/', CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),  # Endpoint para obter token
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'), # Endpoint para atualizar token
-    path('total-stock-value/', TotalStockValueView.as_view(), name='total-stock-value'),
-    path('total-sales/', TotalSalesValueView.as_view(), name='total-sales-value'),
+    path('total-product-value/', TotalProductValueView.as_view(), name='total-stock-value'),
+    path('static-value/', TotalSalesAndAcquisitionValueView.as_view(), name='total-sales-value'),
     
 ]
 
