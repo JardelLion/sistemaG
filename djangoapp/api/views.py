@@ -8,7 +8,7 @@ from rest_framework import viewsets, generics, status
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework.authentication import TokenAuthentication
 import locale
-
+from datetime import datetime
 from .models import Employee, Product, Stock, Sale, ActionHistory
 from .serializers import (
     EmployeeSerializer,
@@ -420,6 +420,11 @@ class SaleViewSet(viewsets.ModelViewSet):
             # Diminui a quantidade no estoque
             stock.quantity -= sale_quantity
             stock.save()  # Salva as alterações no estoque
+
+              # Verifica se o estoque ficou abaixo de 10 e cria uma notificação
+            if stock.quantity < 10:
+                self.create_notification(employee_id, product.name)
+
             self.clear_cart(request)
 
             return Response({
@@ -440,7 +445,15 @@ class SaleViewSet(viewsets.ModelViewSet):
         CartItem.objects.filter(cart=cart).delete()
         return Response({'message': 'Carrinho esvaziado com sucesso'}, status=status.HTTP_200_OK)
 
-
+   
+    def create_notification(self, employee_id, product_name):
+        """Cria uma notificação quando o estoque está abaixo de 10"""
+        notification_message = f"O produto '{product_name}' está abaixo de 10 unidades em estoque."
+        Notification.objects.create(
+            user_id=employee_id,  # Assumindo que você tem um campo user em Notification que referencia o empregado
+            message=notification_message,
+            created_at=datetime.now()  # Supondo que você tenha um campo 'created_at' em Notification
+        )
 
 
 
