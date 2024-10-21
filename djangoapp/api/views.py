@@ -196,23 +196,33 @@ class StockManagerViewSet(viewsets.ModelViewSet):
         except Stock.DoesNotExist:
             return Response({"error": "Produto não encontrado no estoque."}, status=status.HTTP_404_NOT_FOUND)
 
-        # Coleta os dados da requisição para atualização
-        quantity = request.data.get('quantity', stock_item.quantity)
-        acquisition_value = request.data.get('acquisition_value', stock_item.acquisition_value)
-        #description = request.data.get('description', stock_item.description)
+        # Tenta obter o produto relacionado ao item de estoque
+        try:
+            product = Product.objects.get(id=product_id)
+        except Product.DoesNotExist:
+            return Response({"error": "Produto não encontrado."}, status=status.HTTP_404_NOT_FOUND)
 
-        # Atualiza os campos do item de estoque
-        stock_item.quantity = quantity
-        stock_item.acquisition_value = acquisition_value
-        #stock_item.description = description
+        # Coleta a quantidade a ser adicionada ao estoque
+        new_quantity = request.data.get('quantity')
+        if new_quantity is None:
+            return Response({"error": "Quantidade não fornecida."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Verifica se a quantidade solicitada é maior do que a disponível no produto
+        if new_quantity > product.quantity:
+            return Response({"error": "A quantidade solicitada é maior do que a disponível no produto."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Subtrai a quantidade do produto e adiciona ao estoque
+        product.quantity -= new_quantity
+        product.save()
+
+        stock_item.quantity += new_quantity
+        stock_item.acquisition_value = request.data.get('acquisition_value', stock_item.acquisition_value)
         stock_item.save()
 
         # Serializa os dados atualizados
         serializer = self.get_serializer(stock_item)
 
         return Response(serializer.data, status=status.HTTP_200_OK)
-
-
 
 
 class TotalProductValueView(views.APIView):
