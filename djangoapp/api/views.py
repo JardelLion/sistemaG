@@ -803,7 +803,7 @@ from .serializers import NotificationSerializer
 
 @api_view(['GET'])
 def employee_notifications(request):
-    employee = request.user.employee
+    employee = request.user.username
     notifications = Notification.objects.filter(employee=employee, is_read=False)
     serializer = NotificationSerializer(notifications, many=True)
     return Response(serializer.data)
@@ -812,7 +812,7 @@ def employee_notifications(request):
 def mark_as_read(request, notification_id):
     try:
         notification = Notification.objects.get(id=notification_id, 
-                                                employee=request.user.employee)
+                                                employee=request.user.username)
     except Notification.DoesNotExist:
         return Response({
             'error': "Notificação não encontrada."
