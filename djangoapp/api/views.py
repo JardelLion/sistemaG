@@ -450,7 +450,7 @@ class SaleViewSet(viewsets.ModelViewSet):
         """Cria uma notificação quando o estoque está abaixo de 10"""
         notification_message = f"O produto '{product_name}' está abaixo de 10 unidades em estoque."
         Notification.objects.create(
-            id=employee_id,  # Assumindo que você tem um campo user em Notification que referencia o empregado
+            employee=employee_id,  # Assumindo que você tem um campo user em Notification que referencia o empregado
             message=notification_message,
             created_at=datetime.now()  # Supondo que você tenha um campo 'created_at' em Notification
         )
