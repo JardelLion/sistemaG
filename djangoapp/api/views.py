@@ -208,7 +208,7 @@ class StockManagerViewSet(viewsets.ModelViewSet):
             return Response({"error": "Quantidade não fornecida."}, status=status.HTTP_400_BAD_REQUEST)
 
         # Verifica se a quantidade solicitada é maior do que a disponível no produto
-        if new_quantity > product.quantity:
+        if int(new_quantity) > int(product.quantity):
             return Response({"error": "A quantidade solicitada é maior do que a disponível no produto."}, status=status.HTTP_400_BAD_REQUEST)
 
         # Subtrai a quantidade do produto e adiciona ao estoque
