@@ -803,10 +803,19 @@ from .serializers import NotificationSerializer
 
 @api_view(['GET'])
 def employee_notifications(request):
-    employee = request.user.username
-    notifications = Notification.objects.filter(employee=employee, is_read=False)
-    serializer = NotificationSerializer(notifications, many=True)
-    return Response(serializer.data)
+    try:
+        # Busca o funcionário associado ao usuário
+        employee = Employee.objects.get(user=request.user)
+
+        # Filtra as notificações não lidas para o funcionário
+        notifications = Notification.objects.filter(employee=employee, is_read=False)
+        serializer = NotificationSerializer(notifications, many=True)
+        return Response(serializer.data)
+    
+    except Employee.DoesNotExist:
+        return Response({'error': 'Funcionário não encontrado.'}, status=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
+        return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['PATCH'])
 def mark_as_read(request, notification_id):
