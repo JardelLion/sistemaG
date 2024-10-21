@@ -203,12 +203,12 @@ class StockManagerViewSet(viewsets.ModelViewSet):
             return Response({"error": "Produto não encontrado."}, status=status.HTTP_404_NOT_FOUND)
 
         # Coleta a quantidade a ser adicionada ao estoque
-        new_quantity = request.data.get('quantity')
+        new_quantity = int(request.data.get('quantity'))
         if new_quantity is None:
             return Response({"error": "Quantidade não fornecida."}, status=status.HTTP_400_BAD_REQUEST)
 
         # Verifica se a quantidade solicitada é maior do que a disponível no produto
-        if int(new_quantity) > int(product.quantity):
+        if new_quantity > product.quantity:
             return Response({"error": "A quantidade solicitada é maior do que a disponível no produto."}, status=status.HTTP_400_BAD_REQUEST)
 
         # Subtrai a quantidade do produto e adiciona ao estoque
