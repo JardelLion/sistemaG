@@ -800,9 +800,15 @@ class SalesByEmployee(viewsets.ViewSet):
 from rest_framework.decorators import api_view
 from .models import Notification
 from .serializers import NotificationSerializer
+from rest_framework.decorators import permission_classes
 
 @api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def employee_notifications(request):
+    if not request.user.is_authenticated:
+        return Response({
+            'error': "Usuário não autenticado."
+        }, status=status.HTTP_401_UNAUTHORIZED)
     try:
         # Busca o funcionário associado ao usuário
         employee = Employee.objects.get(user=request.user)
