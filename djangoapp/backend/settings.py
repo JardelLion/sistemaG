@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-baj1r(h=tu6bj4*!k4*umw#@^c+eh!4c1n05=3dscm(7vcv8el
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['sistemag.onrender.com', 'localhost', '127.0.0.1', '[::1]']
+ALLOWED_HOSTS = ['sistemag.onrender.com', 'localhost', '127.0.0.1', '[::1]','https://vuchada.com/']
 
 
 # Application definition
@@ -110,8 +110,9 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 
 # accept only the port 3000
 CORS_ALLOWED_ORIGINS = [
-    "https://sistemag.onrender.com",
-    'http://localhost:3000'
+   "https://sistemag.onrender.com",
+    'http://localhost:3000',
+    'https://vuchada.com/'
 ]
 # allow the specific method to use
 CORS_ALLOW_METHODS = [
@@ -134,14 +135,25 @@ CORS_ALLOW_ALL_ORIGINS = True
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 import os
 
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql',
+#         'NAME': 'sistemag',  # Nome do banco de dados
+#         'USER': 'lion',  # Nome do usuário
+#         'PASSWORD': 'UAeEPGWYCaUrSTIDbDS52Lu1xQgChLeC',  # Senha
+#         'HOST': 'dpg-cs79j3btq21c73cqdbe0-a.oregon-postgres.render.com',  # Host
+#         'PORT': '5432',  # Porta
+#     }
+# }
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'sistemag',  # Nome do banco de dados
-        'USER': 'lion',  # Nome do usuário
-        'PASSWORD': 'UAeEPGWYCaUrSTIDbDS52Lu1xQgChLeC',  # Senha
-        'HOST': 'dpg-cs79j3btq21c73cqdbe0-a.oregon-postgres.render.com',  # Host
-        'PORT': '5432',  # Porta
+        'NAME': 'pakadohu_sistemag',  # Nome do banco de dados
+        'USER': 'pakadohu_vuchadasistemag',  # Nome do usuário
+        'PASSWORD': 'K3w.SYhNY;%o',  # Senha
+        'HOST': 'localhost',  # Host
+        'PORT': '3306',  # Porta
     }
 }
 
