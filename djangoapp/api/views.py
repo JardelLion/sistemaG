@@ -846,8 +846,9 @@ def employee_notifications(request):
 @api_view(['PATCH'])
 def mark_as_read(request, notification_id):
     try:
+        employee = Employee.objects.get(user=request.user)
         notification = Notification.objects.get(id=notification_id, 
-                                                employee=request.user.username)
+                                                employee=employee)
     except Notification.DoesNotExist:
         return Response({
             'error': "Notificação não encontrada."
