@@ -419,11 +419,18 @@ class SaleViewSet(viewsets.ModelViewSet):
 
             # Diminui a quantidade no estoque
             stock.quantity -= sale_quantity
-            stock.save()  # Salva as alterações no estoque
+            stock.save() 
+            
+            # Obtenha a instância do Employee correspondente ao request.user
+            try:
+                employee = Employee.objects.get(user=request.user)  # Certifique-se de que há um relacionamento entre Employee e User
+            except Employee.DoesNotExist:
+                return Response({"error": "Funcionário não encontrado."}, status=status.HTTP_404_NOT_FOUND)
+
 
               # Verifica se o estoque ficou abaixo de 10 e cria uma notificação
             if stock.quantity < 10:
-                self.create_notification(employee_id, product.name)
+                self.create_notification(employee, product.name)
 
             self.clear_cart(request)
 
@@ -446,11 +453,11 @@ class SaleViewSet(viewsets.ModelViewSet):
         return Response({'message': 'Carrinho esvaziado com sucesso'}, status=status.HTTP_200_OK)
 
    
-    def create_notification(self, employee_id, product_name):
+    def create_notification(self, employee, product_name):
         """Cria uma notificação quando o estoque está abaixo de 10"""
         notification_message = f"O produto '{product_name}' está abaixo de 10 unidades em estoque."
         Notification.objects.create(
-            employee=employee_id,  # Assumindo que você tem um campo user em Notification que referencia o empregado
+            employee=employee,  # Assumindo que você tem um campo user em Notification que referencia o empregado
             message=notification_message,
             created_at=datetime.now()  # Supondo que você tenha um campo 'created_at' em Notification
         )
