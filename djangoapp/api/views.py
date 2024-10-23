@@ -9,7 +9,8 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework.authentication import TokenAuthentication
 import locale
 from datetime import datetime
-from .models import Employee, Product, Stock, Sale, ActionHistory
+from django.utils import timezone
+from .models import Employee, Product, Stock, Sale, ActionHistory, ProductHistory
 from .serializers import (
     EmployeeSerializer,
     ProductSerializer,
@@ -59,7 +60,16 @@ class ProductViewSet(viewsets.ModelViewSet):
     def create_product(self, request):
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
-            serializer.save()
+            product = serializer.save()
+
+            ProductHistory.objects.create(
+                product_id=product.id,
+                name=product.name,
+                description=product.description,
+                price=product.price,
+                acquisition_value=product.acquisition_value,
+                created_at=timezone.now()
+            )
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -76,7 +86,20 @@ class ProductViewSet(viewsets.ModelViewSet):
         product.name = data.get('name', product.name)
         product.price = data.get('price', product.price)
 
-        product.save()
+        updated_product = product.save()
+
+        try: 
+            product_history = ProductHistory.objects.get(product_id=updated_product.id)
+            product_history.name = updated_product.name
+            product_history.description = updated_product.description
+            product_history.price = updated_product.price
+            product_history.quantity = updated_product.quantity
+            product_history.acquisition_value = updated_product.acquisition_value
+            product_history.created_at = timezone.now()
+            product_history.save()
+        
+        except ProductHistory.DoesNotExist:
+            return Response({"error": "Produto não existe"}, status=status.HTTP_400_BAD_REQUEST)
 
         serializer = self.get_serializer(product)
         return Response(serializer.data, status=status.HTTP_200_OK)

@@ -25,6 +25,15 @@ class Product(models.Model):
     def __str__(self) -> str:
         return self.name
 
+class ProductHistory(models.Model):
+    product_id = models.URLField()
+    name = models.CharField(max_length=255)
+    description = models.CharField(max_length=255)
+    price = models.DecimalField(max_digits=10, decimal_places=2)
+    quantity = models.PositiveIntegerField(default=0)
+    acquisition_value = models.DecimalField(max_digits=10, decimal_places=2, default=0.00) 
+    created_at = models.DateTimeField(default=timezone.now)
+   
 
 class Employee(models.Model):
     MOVEMENT_CHOICES = [
