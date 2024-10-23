@@ -10,7 +10,7 @@ from rest_framework.authentication import TokenAuthentication
 import locale
 from datetime import datetime
 from django.utils import timezone
-from .models import Employee, Product, Stock, Sale, ActionHistory, ProductHistory
+from .models import Employee, Product, Stock, Sale, ActionHistory
 from .serializers import (
     EmployeeSerializer,
     ProductSerializer,
@@ -21,12 +21,11 @@ from .serializers import (
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from django.contrib.auth import authenticate
 from rest_framework.decorators import action
-from .serializers import ProductHistorySerializer
 
 class ProductViewSet(viewsets.ModelViewSet):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
-    #permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated]
 
     def list(self, request, *args, **kwargs):
         queryset = self.get_queryset()
@@ -60,21 +59,7 @@ class ProductViewSet(viewsets.ModelViewSet):
     def create_product(self, request):
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
-            product = serializer.save()
-
-            try:
-                ProductHistory.objects.create(
-                    product_id=product.id,  # ID do produto recém-criado
-                    name=product.name,
-                    description=product.description,
-                    price=product.price,
-                    quantity=product.quantity,  # Use a quantidade do produto
-                    acquisition_value=product.acquisition_value,
-                    created_at=timezone.now()
-                )
-                print("Histórico de produto criado com sucesso!")  # Debugging
-            except Exception as e:
-                print(f"Erro ao criar histórico: {e}")  # Debugging
+            serializer.save()
 
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
@@ -95,17 +80,6 @@ class ProductViewSet(viewsets.ModelViewSet):
         product.quantity = data.get('quantity', product.quantity)
         product.acquisition_value = data.get('acquisition_value', product.acquisition_value)
         product.save()
-
-        # Criar ou atualizar o histórico do produto
-        ProductHistory.objects.create(
-            product=product,  # Usando a ForeignKey
-            name=product.name,
-            description=product.description,
-            price=product.price,
-            quantity=product.quantity,
-            acquisition_value=product.acquisition_value,
-            created_at=timezone.now()
-        )
 
         serializer = self.get_serializer(product)
         return Response(serializer.data, status=status.HTTP_200_OK)
