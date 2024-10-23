@@ -132,6 +132,7 @@ class NotificationSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'employee', 'created_at']
 
 
+from rest_framework import serializers
 from .models import ProductHistory
 
 class ProductHistorySerializer(serializers.ModelSerializer):

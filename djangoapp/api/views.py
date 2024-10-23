@@ -56,32 +56,30 @@ class ProductViewSet(viewsets.ModelViewSet):
         return Response(filtered_products)
 
 
-
     @action(detail=False, methods=['post'], url_path='create')
     def create_product(self, request):
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
             product = serializer.save()
 
-            # Criar o histórico de produtos vinculado ao produto recém-criado
-            product_history_serializer = ProductHistorySerializer(data={
-                'product': product.id,
-                'name': product.name,
-                'description': product.description,
-                'price': product.price,
-                'quantity': product.quantity,
-                'acquisition_value': product.acquisition_value,
-                'created_at': timezone.now()
-            })
-
-            if product_history_serializer.is_valid():
-                product_history_serializer.save()
-            else:
-                return Response(product_history_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            try:
+                ProductHistory.objects.create(
+                    product_id=product.id,  # ID do produto recém-criado
+                    name=product.name,
+                    description=product.description,
+                    price=product.price,
+                    quantity=product.quantity,  # Use a quantidade do produto
+                    acquisition_value=product.acquisition_value,
+                    created_at=timezone.now()
+                )
+                print("Histórico de produto criado com sucesso!")  # Debugging
+            except Exception as e:
+                print(f"Erro ao criar histórico: {e}")  # Debugging
 
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
     @action(detail=True, methods=['PUT'], url_path='update')
     def update_product(self, request, pk=None):
@@ -99,24 +97,21 @@ class ProductViewSet(viewsets.ModelViewSet):
         product.save()
 
         # Criar ou atualizar o histórico do produto
-        product_history_serializer = ProductHistorySerializer(data={
-            'product': product.id,
-            'name': product.name,
-            'description': product.description,
-            'price': product.price,
-            'quantity': product.quantity,
-            'acquisition_value': product.acquisition_value,
-            'created_at': timezone.now()
-        })
-
-        if product_history_serializer.is_valid():
-            product_history_serializer.save()
-        else:
-            return Response(product_history_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        ProductHistory.objects.create(
+            product=product,  # Usando a ForeignKey
+            name=product.name,
+            description=product.description,
+            price=product.price,
+            quantity=product.quantity,
+            acquisition_value=product.acquisition_value,
+            created_at=timezone.now()
+        )
 
         serializer = self.get_serializer(product)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+
+   
 
 class StockManagerViewSet(viewsets.ModelViewSet):
     queryset = Stock.objects.all()

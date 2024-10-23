@@ -27,7 +27,7 @@ class Product(models.Model):
 
 class ProductHistory(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    product_id = models.ForeignKey(Product, on_delete=models.CASCADE)
+    product_id = models.UUIDField()  # Certifique-se de que isso está definido
     name = models.CharField(max_length=255)
     description = models.CharField(max_length=255)
     price = models.DecimalField(max_digits=10, decimal_places=2)
@@ -35,9 +35,6 @@ class ProductHistory(models.Model):
     acquisition_value = models.DecimalField(max_digits=10, decimal_places=2, default=0.00) 
     created_at = models.DateTimeField(default=timezone.now)
 
-    def __str__(self):
-        return f"Histórico do produto: {self.name}"
-   
 
 class Employee(models.Model):
     MOVEMENT_CHOICES = [
