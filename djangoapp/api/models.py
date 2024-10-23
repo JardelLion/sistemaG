@@ -26,7 +26,8 @@ class Product(models.Model):
         return self.name
 
 class ProductHistory(models.Model):
-    product_id = models.URLField()
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    product_id = models.UUIDField()
     name = models.CharField(max_length=255)
     description = models.CharField(max_length=255)
     price = models.DecimalField(max_digits=10, decimal_places=2)
