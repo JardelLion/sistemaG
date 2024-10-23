@@ -377,12 +377,14 @@ class CartViewSet(viewsets.ViewSet):
 class SaleViewSet(viewsets.ModelViewSet):
     queryset = Sale.objects.all()
     serializer_class = SaleSerializer
+    permission_classes = [IsAuthenticated]
 
 
     def create(self, request, *args, **kwargs):
         employee_id = request.data.get("employee")
         product_id = request.data.get("product")
         sale_quantity = request.data.get("sale_quantity")
+       
 
         try:
             # Verifica se o produto existe
@@ -797,11 +799,11 @@ class SalesByEmployee(viewsets.ViewSet):
 
     def list(self, request):
         # Obtém todos os funcionários
-        employees = Employee.objects.all()
+        employees = Employee.objects.filter(role='employee')
 
         # Cria uma lista para armazenar os dados de vendas por funcionário
         sales_data = []
-
+        
         for employee in employees:
             # Calcula o total de vendas para cada funcionário
             total_sales = Sale.objects.filter(employee=employee).annotate(
