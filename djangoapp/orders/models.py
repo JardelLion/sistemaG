@@ -3,6 +3,7 @@ import uuid
 from django.contrib.auth.models import User
 
 from people.models import Employee
+from inventory.models import Product, Stock
 
 # Create your models here.
 
