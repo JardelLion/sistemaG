@@ -22,10 +22,10 @@ class EmployeeViewSet(viewsets.ModelViewSet):
                 'email': employee['email'],
                 'contact': employee['contact'],
                 'address': employee['address'],
-                'username': employee['username'] if is_admin else None,
+                'username': employee['username'] ,#if is_admin else None,
                 'role': employee['role']
             }
-            for employee in serializer.data if employee['role'] == 'employee' 
+            for employee in serializer.data #if employee['role'] == 'employee' 
         ]
         return Response(filtered_employees)
     

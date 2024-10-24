@@ -22,9 +22,7 @@ class Employee(models.Model):
     contact = models.CharField(max_length=15)
     address = models.TextField()
     role = models.CharField(max_length=100, choices=MOVEMENT_CHOICES)
-   
     is_active = models.BooleanField(default=True)
-
 
     def __str__(self) -> str:
         return self.user.username

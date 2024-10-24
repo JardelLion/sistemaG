@@ -5,10 +5,9 @@ from django.utils.translation import gettext_lazy as _
 from django.contrib.auth.models import User
 from .models import Employee, EmployeeHistory
 
-
 class EmployeeSerializer(serializers.ModelSerializer):
-    username = serializers.CharField()
-    email = serializers.EmailField()
+    username = serializers.CharField(source='user.username')  # Acessa o username do User
+    email = serializers.EmailField(source='user.email')  # Acessa o email do User
     password = serializers.CharField(write_only=True)
 
     class Meta:
@@ -34,38 +33,34 @@ class EmployeeSerializer(serializers.ModelSerializer):
         if User.objects.filter(username=value).exists():
             raise serializers.ValidationError(_("Este nome de usuário já está em uso."))
         return value
-
+    
     def create(self, validated_data):
-        # Aqui, o validated_data deve conter os campos diretamente
-        password = validated_data.pop('password')
-        
-        # Criando o usuário
+        # Tenta acessar os dados do User, se não existir, lança um erro
+        user_data = validated_data.pop('user')  # Extrai o dicionário de dados do usuário
+        password = validated_data.pop('password')  # Remove a senha do validated_data
+
+        # Criando o usuário (User)
         user = User.objects.create_user(
-            username=validated_data.pop('username'),
-            email=validated_data.pop('email'),
-            password=password
+            username=user_data['username'],  # Acesso ao username do User
+            email=user_data['email'],  # Acesso ao email do User
+            password=password  # A hash da senha ocorre aqui
         )
 
         # Criando o Employee associado ao User
+        # Certifique-se de que 'user' não está em validated_data
         employee = Employee.objects.create(user=user, **validated_data)
 
-        # Se você deseja criar um histórico, pode usar os dados do employee
         EmployeeHistory.objects.create(
-            name=employee.name,
-            contact=employee.contact,
-            address=employee.address,
-            role=employee.role
+            employee_id = employee.id,
+            name=employee.name,  # Acessa o nome do Employee
+            contact=employee.contact,  # Acessa o contato do Employee
+            address=employee.address,  # Acessa o endereço do Employee
+            role=employee.role  # Acessa o cargo do Employee
         )
 
         return employee
-
-
-
-
 
 class EmployeeHistorySerializer(serializers.ModelSerializer):
     class Meta:
         model = EmployeeHistory
         fields = "__all__"
-
-
