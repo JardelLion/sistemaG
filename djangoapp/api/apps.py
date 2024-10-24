@@ -7,4 +7,4 @@ class ApiConfig(AppConfig):
 
 
     def ready(self):
-        import api.signals
+        import djangoapp.people.signals

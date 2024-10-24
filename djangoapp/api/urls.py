@@ -31,7 +31,9 @@ router.register(r'stockmanager', StockManagerViewSet) # done
 
 router.register(r'sales', SaleViewSet, basename="sales")
 router.register(r'sales-by-employee', SalesByEmployee, basename='sales-by-employee')
+
 router.register(r'aggregate-sales-by-date', AggregateSalesByDateViewSet, basename='aggregate-sales-by-date')
+
 router.register(r'action-history', ActionHistoryViewSet, basename='action-history')
 router.register(r'login-activities', LoginActivityViewSet, basename='log-activities')
 

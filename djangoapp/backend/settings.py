@@ -25,7 +25,8 @@ SECRET_KEY = 'django-insecure-baj1r(h=tu6bj4*!k4*umw#@^c+eh!4c1n05=3dscm(7vcv8el
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['sistemag.onrender.com', 'localhost', '127.0.0.1', '[::1]']
+ALLOWED_HOSTS = ['sistemag.onrender.com', 'localhost', '127.0.0.1', '[::1]',
+                 'http://localhost:3000']
 
 
 # Application definition
@@ -41,7 +42,6 @@ INSTALLED_APPS = [
     'corsheaders',
     'backend',
     'rest_framework_simplejwt',
-    "inventory",
     "orders",
     'people',
 
