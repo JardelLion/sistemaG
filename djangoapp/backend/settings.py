@@ -38,7 +38,6 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
-    'api',
     'corsheaders',
     'backend',
     'rest_framework_simplejwt',
@@ -154,11 +153,12 @@ import os
 
 DATABASES = {
     'default': {
-        'NAME': os.environ.get('sistemag'),
-        'USER': os.environ.get('postgres'),
-        "PASSWORD":  os.environ.get('@jardeljr.7'),
-        'HOST': os.environ.get('localhost'),
-        'PORT': os.environ.get('5432')
+        'ENGINE':'django.db.backends.postgresql',
+        'NAME':'sistemag',
+        'USER':'postgres',
+        "PASSWORD":'@jardeljr.7',
+        'HOST':'localhost',
+        'PORT':'5432'
     }
 }
 

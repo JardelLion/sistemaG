@@ -1,7 +1,7 @@
 # api/backends.py
 
 from django.contrib.auth.backends import BaseBackend
-import  api.models as api
+import people.models as api
 
 class UsernameBackend(BaseBackend):
     def authenticate(self, request, username=None, password=None, **kwargs):

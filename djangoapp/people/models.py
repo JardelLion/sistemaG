@@ -73,7 +73,7 @@ class EmployeeHistory(models.Model):
     ]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    employee = models.ForeignKey(Employee, on_delete=models.SET_NULL, null=True, blank=True, related_name="employee-history" )
+    employee = models.ForeignKey(Employee, on_delete=models.SET_NULL, null=True, blank=True, related_name="employee_history" )
     name = models.CharField(max_length=100)
     contact = models.CharField(max_length=15)
     address = models.TextField()
