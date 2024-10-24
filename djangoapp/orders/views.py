@@ -121,7 +121,7 @@ class StockManagerViewSet(viewsets.ModelViewSet):
         employee = Employee.objects.get(user=request.user)
         # Coleta os dados da requisição
         product_id = request.data.get('product_id')
-        quantity = request.data.get('quantity')
+        quantity = int(request.data.get('quantity'))
         acquisition_value = request.data.get('acquisition_value', 0)
         description = request.data.get('description', '')
         available = request.data.get('is_available')

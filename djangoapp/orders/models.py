@@ -61,10 +61,11 @@ class Sale(models.Model):
             product=self.product,
             product_name=self.product.name,
             product_price=self.product.price,  # Supondo que o Product tenha um campo de preço
-            product_acquistion_value =self.product.acquisition_value,
+            product_acquisition_value =self.product.acquisition_value,
             
             sale_quantity=self.sale_quantity,
             sale_price=self.product.price * self.sale_quantity,  # Preço total da venda
+            stock_acquisition_value= stock.acquisition_value,
 
             employee=self.employee,
             employee_name=self.employee.name,
@@ -84,7 +85,8 @@ class SaleHistory(models.Model):
     
     sale_quantity = models.PositiveIntegerField()
     sale_price = models.DecimalField(max_digits=10, decimal_places=2)  # Preço total da venda
-   
+    stock_acquisition_value = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)  # Valor de aquisição
+    
     
     employee = models.ForeignKey(Employee, on_delete=models.SET_NULL, null=True, blank=True)
     employee_name = models.CharField(max_length=255)
@@ -101,6 +103,7 @@ class Stock(models.Model):
     product = models.OneToOneField(Product, on_delete=models.CASCADE)  # Cada produto tem um estoque
     quantity = models.PositiveIntegerField(default=0)  # Quantidade no estoque
     acquisition_value = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)  # Valor de aquisição
+    
     available = models.BooleanField(default=False) 
     date_added = models.DateTimeField(auto_now_add=True)
     responsible_user = models.ForeignKey(Employee, on_delete=models.CASCADE)  # Usuário responsável
