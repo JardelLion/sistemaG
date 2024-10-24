@@ -42,6 +42,9 @@ INSTALLED_APPS = [
     'corsheaders',
     'backend',
     'rest_framework_simplejwt',
+    "inventory",
+    "orders",
+    'people'
 
 ]
 
