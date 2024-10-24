@@ -44,7 +44,7 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     "inventory",
     "orders",
-    'people'
+    'people',
 
 ]
 
@@ -154,14 +154,15 @@ import os
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'sistemag',  # Nome do banco de dados
-        'USER': 'lion',  # Nome do usuário
-        'PASSWORD': 'UAeEPGWYCaUrSTIDbDS52Lu1xQgChLeC',  # Senha
-        'HOST': 'dpg-cs79j3btq21c73cqdbe0-a.oregon-postgres.render.com',  # Host
-        'PORT': '5432',  # Porta
+        'NAME': os.environ.get('sistemag'),
+        'USER': os.environ.get('postgres'),
+        "PASSWORD":  os.environ.get('@jardeljr.7'),
+        'HOST': os.environ.get('localhost'),
+        'PORT': os.environ.get('5432')
     }
 }
+
+      
 
 
 # Password validation

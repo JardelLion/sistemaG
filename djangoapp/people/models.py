@@ -7,7 +7,6 @@ from django.db.models import Sum
 from django.core.exceptions import ValidationError
 import re
 from django.contrib.auth.models import User
-from orders.models import Sale
 
 # Create your models here.
 
@@ -44,6 +43,7 @@ class Employee(models.Model):
         return check_password(raw_password, self.password)
 
     def realized_sales(self):
+        from orders.models import Sale
         return Sale.objects.filter(employee=self)
     
     def total_sales(self):
@@ -71,7 +71,7 @@ class EmployeeHistory(models.Model):
         ('admin', 'admin'),
         ('employee', 'employee')
     ]
-    
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     employee = models.ForeignKey(Employee, on_delete=models.SET_NULL, null=True, blank=True, related_name="employee-history" )
     name = models.CharField(max_length=100)
