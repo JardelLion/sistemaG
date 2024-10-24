@@ -20,6 +20,18 @@ class Product(models.Model):
     def __str__(self) -> str:
         return self.name
     
+class ProductHistory(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    product_id = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True)
+    acquisition_value = models.DecimalField(max_digits=10, decimal_places=2)
+    created_at = models.DateTimeField(default=timezone.now)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self) -> str:
+        return self.acquisition_value
+
+
+
 
 class Sale(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)

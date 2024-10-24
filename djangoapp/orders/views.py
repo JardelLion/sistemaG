@@ -53,9 +53,16 @@ class ProductViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['post'], url_path='create')
     def create_product(self, request):
+        from .models import ProductHistory
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
-            serializer.save()
+            product = serializer.save()
+            data = request.data
+            ProductHistory.objects.create(
+                product_id=product.id,
+                acquisition_value=data.get("acquisition_value")
+            )
+            
 
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
@@ -264,6 +271,7 @@ class TotalSalesAndAcquisitionValueView(APIView):
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 from rest_framework import views
+from .models import SaleHistory
 class TotalProductValueView(views.APIView):
     permission_classes = [IsAuthenticated]
 
@@ -272,9 +280,9 @@ class TotalProductValueView(views.APIView):
         total_value = 0
         
         # Itera sobre todos os itens no estoque
-        product_items = Product.objects.all()
-        for product_item in product_items:
-            total_value += product_item.acquisition_value
+        sales_history = SaleHistory.objects.all()
+        for sale_acquisition in sales_history:
+            total_value += sale_acquisition.product_acquisition_value
 
 
         return Response({

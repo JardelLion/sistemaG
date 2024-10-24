@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Sale, Stock, Cart, CartItem, Product
+from .models import Sale, Stock, Cart, CartItem, Product, ProductHistory
 
 class ProductSerializer(serializers.ModelSerializer):
     description = serializers.CharField(required=False)
@@ -8,6 +8,12 @@ class ProductSerializer(serializers.ModelSerializer):
         model = Product
         fields = "__all__"
 
+
+
+class ProductHistorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProductHistory
+        fields = "__all__"
 
 
 class CartItemSerializer(serializers.ModelSerializer):
