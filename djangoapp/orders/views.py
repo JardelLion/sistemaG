@@ -15,7 +15,7 @@ from orders.serializers import StockManagerSerializer
 from django.shortcuts import get_object_or_404
 from rest_framework.decorators import action
 from .serializers import ProductSerializer
-
+from .models import ProductHistory
 
 
 class ProductViewSet(viewsets.ModelViewSet):
@@ -49,34 +49,58 @@ class ProductViewSet(viewsets.ModelViewSet):
             })
 
         return Response(filtered_products)
+    
+     # Desabilitar os métodos padrão de criação, atualização e deleção
+    def create(self, request, *args, **kwargs):
+        return Response({'error': 'Método não permitido.'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
-
+    def update(self, request, *args, **kwargs):
+        return Response({'error': 'Método não permitido.'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+    
     @action(detail=False, methods=['post'], url_path='create')
     def create_product(self, request):
-        from .models import ProductHistory
+       
+        
+        # Serialização dos dados da requisição
         serializer = self.get_serializer(data=request.data)
+        
+        # Verificar se os dados são válidos
         if serializer.is_valid():
+            # Salvar o produto após validação
             product = serializer.save()
-            data = request.data
-            ProductHistory.objects.create(
-                product_id=product.id,
-                acquisition_value=data.get("acquisition_value")
-            )
             
+            # Capturar os dados da requisição
+            data = request.data
+            
+            # Verificar se o campo 'acquisition_value' está presente
+            acquisition_value = data.get("acquisition_value")
+            if acquisition_value is not None:
+                # Criar o histórico do produto
+                ProductHistory.objects.create(
+                    product_id=product,  # Usar a instância do produto
+                    acquisition_value=acquisition_value  # Valor de aquisição vindo da requisição
+                )
+            else:
+                return Response({'error': 'Acquisition value is required.'}, status=status.HTTP_400_BAD_REQUEST)
 
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+
+
     @action(detail=True, methods=['PUT'], url_path='update')
     def update_product(self, request, pk=None):
         try:
             product = Product.objects.get(pk=pk)
+            product_history = ProductHistory.objects.get(product_id=product)
+    
         except Product.DoesNotExist:
             return Response({'error': 'Produto não encontrado'}, status=status.HTTP_404_NOT_FOUND)
 
         # Atualize os dados do produto
+        
         data = request.data
         product.name = data.get('name', product.name)
         product.price = data.get('price', product.price)
@@ -84,7 +108,13 @@ class ProductViewSet(viewsets.ModelViewSet):
         product.acquisition_value = data.get('acquisition_value', product.acquisition_value)
         product.save()
 
+        print(data)
+    
         serializer = self.get_serializer(product)
+       
+        product_history.acquisition_value = product.acquisition_value
+        product_history.save()
+
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 

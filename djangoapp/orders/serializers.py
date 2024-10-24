@@ -1,18 +1,11 @@
 from rest_framework import serializers
-from .models import Sale, Stock, Cart, CartItem, Product, ProductHistory
+from .models import Sale, Stock, Cart, CartItem, Product
 
 class ProductSerializer(serializers.ModelSerializer):
     description = serializers.CharField(required=False)
 
     class Meta:
         model = Product
-        fields = "__all__"
-
-
-
-class ProductHistorySerializer(serializers.ModelSerializer):
-    class Meta:
-        model = ProductHistory
         fields = "__all__"
 
 
