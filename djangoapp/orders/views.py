@@ -77,7 +77,7 @@ class ProductViewSet(viewsets.ModelViewSet):
             if acquisition_value is not None:
                 # Criar o histórico do produto
                 ProductHistory.objects.create(
-                    product_id=product,  # Usar a instância do produto
+                    product_id=product.id,  # Usar a instância do produto
                     acquisition_value=acquisition_value  # Valor de aquisição vindo da requisição
                 )
             else:
@@ -87,37 +87,48 @@ class ProductViewSet(viewsets.ModelViewSet):
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-
-
-
     @action(detail=True, methods=['PUT'], url_path='update')
     def update_product(self, request, pk=None):
         try:
+            # Recupera o produto usando o pk fornecido
             product = Product.objects.get(pk=pk)
+            
+            # Tenta recuperar o histórico do produto, se existir
             product_history = ProductHistory.objects.get(product_id=product)
-    
+
         except Product.DoesNotExist:
             return Response({'error': 'Produto não encontrado'}, status=status.HTTP_404_NOT_FOUND)
+        except ProductHistory.DoesNotExist:
+            # Se não houver histórico, criamos um novo
+            product_history = ProductHistory(product_id=product)
 
         # Atualize os dados do produto
-        
         data = request.data
         product.name = data.get('name', product.name)
         product.price = data.get('price', product.price)
         product.quantity = data.get('quantity', product.quantity)
-        product.acquisition_value = data.get('acquisition_value', product.acquisition_value)
+        product.acquisition_value = data.get("acquisition_value", product.acquisition_value)
+
+        # Salva as alterações no produto
         product.save()
 
-        print(data)
-    
-        serializer = self.get_serializer(product)
-       
-        product_history.acquisition_value = product.acquisition_value
+        # Atualiza o valor de aquisição no histórico
+        acquisition_value = data.get('acquisition_value')
+        if acquisition_value is not None:
+            product_history.acquisition_value = acquisition_value
+        else:
+            product_history.acquisition_value = product.acquisition_value  # Mantenha o valor atual se não houver novo
+
+        # Salva as alterações no histórico
         product_history.save()
 
+        # Serializa e retorna os dados do produto atualizado
+        serializer = self.get_serializer(product)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
+
+   
 
 class StockManagerViewSet(viewsets.ModelViewSet):
     queryset = Stock.objects.all()
@@ -261,7 +272,7 @@ class StockManagerViewSet(viewsets.ModelViewSet):
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-
+from .models import SaleHistory
 class TotalSalesAndAcquisitionValueView(APIView):
     def get(self, request, *args, **kwargs):
         try:
@@ -270,14 +281,14 @@ class TotalSalesAndAcquisitionValueView(APIView):
             total_spend = 0
 
             # Itera por todas as vendas e calcula o valor total de vendas e de aquisição
-            sales = Sale.objects.all()
+            sales = SaleHistory.objects.all()
             for sale in sales:
-                product = sale.product
-                total_sales_value += sale.sale_quantity * product.price
-                total_acquisition_value += sale.sale_quantity * product.acquisition_value
+               
+                total_sales_value += sale.sale_quantity * sale.product_price
+                total_acquisition_value += sale.sale_quantity * sale.product_acquisition_value
 
             # Calcula o total de custos de aquisição de todos os produtos
-            products = Product.objects.all()
+            products = ProductHistory.objects.all()
             for product in products:
                 total_spend += product.acquisition_value
 
@@ -301,7 +312,7 @@ class TotalSalesAndAcquisitionValueView(APIView):
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 from rest_framework import views
-from .models import SaleHistory
+
 class TotalProductValueView(views.APIView):
     permission_classes = [IsAuthenticated]
 
@@ -310,9 +321,9 @@ class TotalProductValueView(views.APIView):
         total_value = 0
         
         # Itera sobre todos os itens no estoque
-        sales_history = SaleHistory.objects.all()
-        for sale_acquisition in sales_history:
-            total_value += sale_acquisition.product_acquisition_value
+        product_history = ProductHistory.objects.all()
+        for product in product_history:
+            total_value += product.acquisition_value
 
 
         return Response({
