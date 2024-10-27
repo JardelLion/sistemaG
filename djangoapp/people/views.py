@@ -152,10 +152,10 @@ def employee_notifications(request):
         }, status=status.HTTP_401_UNAUTHORIZED)
     try:
         # Busca o funcionário associado ao usuário
-        employee = Employee.objects.get(user=request.user)
+        #employee = Employee.objects.get(user=request.user)
 
-        # Filtra as notificações não lidas para o funcionário
-        notifications = Notification.objects.filter(employee=employee, is_read=False)
+        # Filtra as notificações não lidas abaixo de 10
+        notifications = Notification.objects.filter(is_read=False)
         serializer = NotificationSerializer(notifications, many=True)
         return Response(serializer.data)
     
