@@ -77,7 +77,6 @@ class Sale(models.Model):
             
             sale_quantity=self.sale_quantity,
             sale_price=self.product.price * self.sale_quantity,  # Preço total da venda
-            stock_acquisition_value= stock.acquisition_value,
 
             employee=self.employee,
             employee_name=self.employee.name,
