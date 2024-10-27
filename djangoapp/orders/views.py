@@ -133,7 +133,7 @@ class ProductViewSet(viewsets.ModelViewSet):
 class StockManagerViewSet(viewsets.ModelViewSet):
     queryset = Stock.objects.all()
     serializer_class = StockManagerSerializer
-    #permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated]
 
     def list(self, request, *args, **kwargs):
         # Obtém todos os objetos de Stock
@@ -288,6 +288,8 @@ class StockManagerViewSet(viewsets.ModelViewSet):
 
 from .models import SaleHistory
 class TotalSalesAndAcquisitionValueView(APIView):
+    permission_classes = [IsAuthenticated]
+
     def get(self, request, *args, **kwargs):
         try:
             total_sales_value = 0
@@ -299,16 +301,12 @@ class TotalSalesAndAcquisitionValueView(APIView):
             for sale in sales:
                
                 total_sales_value += sale.sale_quantity * sale.product_price
-                total_acquisition_value += sale.sale_quantity * sale.product_acquisition_value
+                total_acquisition_value += (sale.sale_quantity * sale.product_acquisition_value)
 
-            # Calcula o total de custos de aquisição de todos os produtos
-            products = ProductHistory.objects.all()
-            for product in products:
-                total_spend += product.acquisition_value
-
+            #
             # Calcula o lucro (profit) apenas se houver vendas
             if total_sales_value > 0:
-                profit = total_sales_value - total_spend
+                profit = total_sales_value - total_acquisition_value
                 margin = (profit / total_sales_value) * 100
             else:
                 profit = 0  # Se não houver vendas, o lucro é zero
@@ -318,8 +316,7 @@ class TotalSalesAndAcquisitionValueView(APIView):
                 "total_sales_value": total_sales_value,
                 "total_acquisition_value": total_acquisition_value,
                 "profit": profit,
-                "margin": margin,
-                'total_spend': total_spend
+                "margin": margin
             }, status=status.HTTP_200_OK)
 
         except Exception as e:
@@ -444,7 +441,7 @@ from collections import defaultdict
 from operator import itemgetter
 
 class SalesByEmployeeWithIdViewSet(viewsets.ViewSet):
-    # permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated]
 
     def list(self, request, id=None):
         # Se o ID do funcionário não for fornecido, retorne um erro
@@ -509,7 +506,7 @@ class SalesByEmployeeWithIdViewSet(viewsets.ViewSet):
         return Response({"employee_id": id, "sales": sales_list_sorted, 'total_sales': total_value}, status=status.HTTP_200_OK)
 
 class AggregateSalesByDateViewSet(viewsets.ViewSet):
-    #permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated]
 
     def list(self, request):
         sales = (
@@ -530,6 +527,7 @@ from django.db.models import Sum, F
 
 
 class SalesByEmployee(viewsets.ViewSet):
+    permission_classes = [IsAuthenticated]
     """
     ViewSet para retornar o total de vendas por funcionário.
     """
@@ -543,9 +541,9 @@ class SalesByEmployee(viewsets.ViewSet):
         
         for employee in employees:
             # Calcula o total de vendas para cada funcionário
-            total_sales = Sale.objects.filter(employee=employee).annotate(
-                product_price=F('product__price')  # Obter o preço do produto relacionado
-            ).aggregate(total=Sum(F('sale_quantity') * F('product__price')))['total'] or 0
+            total_sales = SaleHistory.objects.filter(employee_id=employee).annotate(
+                product_pricef=F('product_price')  # Obter o preço do produto relacionado
+            ).aggregate(total=Sum(F('sale_quantity') * F('product_price')))['total'] or 0
 
             sales_data.append({
                 'employee_id': employee.id,
@@ -696,6 +694,7 @@ def employee_notifications(request):
 
 
 @api_view(['PATCH'])
+@permission_classes([IsAuthenticated])
 def mark_as_read(request, notification_id):
     try:
         employee = Employee.objects.get(user=request.user)

@@ -17,7 +17,7 @@ from django.contrib.auth import authenticate
 class EmployeeViewSet(viewsets.ModelViewSet):
     queryset = Employee.objects.all()
     serializer_class = EmployeeSerializer
-    # permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated]
     
     def list(self, request, *args, **kwargs):
         queryset = self.get_queryset()
