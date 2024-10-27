@@ -199,7 +199,7 @@ class Stock(models.Model):
 class Notification(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     employee  = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='notifications')
-    product = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True)
+    product_description =  models.CharField(max_length=255)
     message = models.CharField(max_length=255)
     is_read = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)

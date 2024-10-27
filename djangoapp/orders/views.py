@@ -265,8 +265,7 @@ class StockManagerViewSet(viewsets.ModelViewSet):
 
         if int(stock_item.quantity) > 10:
             try:
-                # Filtra notificações pelo `product_id`
-                notifications = Notification.objects.filter(product_id=product)
+                notifications = Notification.objects.filter(product_description=product.description)
                 
                 if not notifications.exists():
                     return Response({"error": "O produto não foi notificado"}, status=status.HTTP_400_BAD_REQUEST)
@@ -399,7 +398,7 @@ class SaleViewSet(viewsets.ModelViewSet):
 
               # Verifica se o estoque ficou abaixo de 10 e cria uma notificação
             if int(stock.quantity) < 10:
-                self.create_notification(employee, product.name)
+                self.create_notification(employee, product.name, product.description)
 
             self.clear_cart(request)
 
@@ -422,12 +421,13 @@ class SaleViewSet(viewsets.ModelViewSet):
         return Response({'message': 'Carrinho esvaziado com sucesso'}, status=status.HTTP_200_OK)
 
    
-    def create_notification(self, employee, product_name):
+    def create_notification(self, employee, product_name, product_description):
         """Cria uma notificação quando o estoque está abaixo de 10"""
         notification_message = f"O produto '{product_name}' está abaixo de 10 unidades em estoque."
         Notification.objects.create(
             employee=employee,  # Assumindo que você tem um campo user em Notification que referencia o empregado
             message=notification_message,
+            product_description=product_description,
             created_at=datetime.now()  # Supondo que você tenha um campo 'created_at' em Notification
         )
 
@@ -679,8 +679,6 @@ def employee_notifications(request):
             'error': "Usuário não autenticado."
         }, status=status.HTTP_401_UNAUTHORIZED)
     try:
-        # Busca o funcionário associado ao usuário
-        #employee = Employee.objects.get(user=request.user)
 
         # Filtra as notificações abaixo de 10
         notifications = Notification.objects.filter(is_read=False)

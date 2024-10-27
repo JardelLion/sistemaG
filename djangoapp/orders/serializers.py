@@ -53,5 +53,5 @@ class SaleSerializer(serializers.ModelSerializer):
 class NotificationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Notification
-        fields = ['id', 'employee', 'message', 'is_read', 'created_at']
+        fields = ['id', 'employee', 'message', 'product_description', 'is_read', 'created_at']
         read_only_fields = ['id', 'employee', 'created_at']
