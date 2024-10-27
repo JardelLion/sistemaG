@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Sale, Stock, Cart, CartItem, Product
+from .models import Sale, Stock, Cart, CartItem, Product, Notification
 
 class ProductSerializer(serializers.ModelSerializer):
     description = serializers.CharField(required=False)
@@ -62,3 +62,10 @@ class SaleSerializer(serializers.ModelSerializer):
     class Meta:
         model = Sale
         fields = "__all__"
+
+
+class NotificationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Notification
+        fields = ['id', 'employee', 'message', 'is_read', 'created_at']
+        read_only_fields = ['id', 'employee', 'created_at']

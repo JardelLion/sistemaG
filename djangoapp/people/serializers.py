@@ -3,7 +3,7 @@ import re
 from rest_framework import serializers
 from django.utils.translation import gettext_lazy as _
 from django.contrib.auth.models import User
-from .models import Employee, EmployeeHistory, LoginActivity, Notification
+from .models import Employee, EmployeeHistory, LoginActivity
 
 class EmployeeSerializer(serializers.ModelSerializer):
     username = serializers.CharField(source='user.username')  # Acessa o username do User
@@ -77,9 +77,3 @@ class LoginactivitySerializer(serializers.ModelSerializer):
         extra_kwargs = {'username': {'read_only': True}} 
 
 
-
-class NotificationSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Notification
-        fields = ['id', 'employee', 'message', 'is_read', 'created_at']
-        read_only_fields = ['id', 'employee', 'created_at']

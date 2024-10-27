@@ -5,7 +5,7 @@ from rest_framework import viewsets, status
 from rest_framework.authentication import TokenAuthentication
 
 from datetime import datetime
-from people.models import Employee, Notification
+from people.models import Employee
 from orders.models import Product
 from orders.models import Stock, Sale, Cart, CartItem
 from orders.serializers import SaleSerializer
@@ -689,5 +689,49 @@ class CartViewSet(viewsets.ViewSet):
         cart_item = get_object_or_404(CartItem, cart=cart, id=pk)
         cart_item.delete()
 
-        return Response({'message': 'Produto removido do carrinho'}, status=status.HTTP_204_NO_CONTENT)
+        return Response({'message': 'Produto removido do carrinho'}, status=status.HTTP_204_NO_CONTENT)    
+    
 
+
+from rest_framework.decorators import api_view
+from .models import Notification
+from .serializers import NotificationSerializer
+from rest_framework.decorators import permission_classes
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def employee_notifications(request):
+    if not request.user.is_authenticated:
+        return Response({
+            'error': "Usuário não autenticado."
+        }, status=status.HTTP_401_UNAUTHORIZED)
+    try:
+        # Busca o funcionário associado ao usuário
+        #employee = Employee.objects.get(user=request.user)
+
+        # Filtra as notificações não lidas abaixo de 10
+        notifications = Notification.objects.filter(is_read=False)
+        serializer = NotificationSerializer(notifications, many=True)
+        return Response(serializer.data)
+    
+    except Employee.DoesNotExist:
+        return Response({'error': 'Funcionário não encontrado.'}, status=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
+        return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['PATCH'])
+def mark_as_read(request, notification_id):
+    try:
+        employee = Employee.objects.get(user=request.user)
+        notification = Notification.objects.get(id=notification_id, 
+                                                employee=employee)
+    except Notification.DoesNotExist:
+        return Response({
+            'error': "Notificação não encontrada."
+        }, status=status.HTTP_404_NOT_FOUND)
+    
+    notification.is_read = True 
+    notification.save()
+    serializer = NotificationSerializer(notification)
+    return Response(serializer.data)
