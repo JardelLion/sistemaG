@@ -38,25 +38,11 @@ class StockManagerSerializer(serializers.ModelSerializer):
    
     class Meta:
         model = Stock
-        fields = ['product', 'quantity', 'acquisition_value', 'responsible_user', 'available'] 
+        fields = ['product', 'quantity', 'responsible_user', 'available'] 
 
     def create(self, validated_data):
         return Stock.objects.create(**validated_data)
 
-    
-
-from .models import Stock
-
-class StockManagerSerializer(serializers.ModelSerializer):
-   
-    class Meta:
-        model = Stock
-        fields = ['product', 'quantity', 'acquisition_value', 'responsible_user', 'available'] 
-
-    def create(self, validated_data):
-        return Stock.objects.create(**validated_data)
-
-    
 
 class SaleSerializer(serializers.ModelSerializer):
     class Meta:

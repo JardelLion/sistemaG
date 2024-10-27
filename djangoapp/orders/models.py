@@ -97,9 +97,7 @@ class SaleHistory(models.Model):
     
     sale_quantity = models.PositiveIntegerField()
     sale_price = models.DecimalField(max_digits=10, decimal_places=2)  # Preço total da venda
-    stock_acquisition_value = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)  # Valor de aquisição
-    
-    
+  
     employee = models.ForeignKey(Employee, on_delete=models.SET_NULL, null=True, blank=True)
     employee_name = models.CharField(max_length=255)
     employee_email = models.EmailField()
@@ -114,8 +112,7 @@ class SaleHistory(models.Model):
 class Stock(models.Model):
     product = models.OneToOneField(Product, on_delete=models.CASCADE)  # Cada produto tem um estoque
     quantity = models.PositiveIntegerField(default=0)  # Quantidade no estoque
-    acquisition_value = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)  # Valor de aquisição
-    
+
     available = models.BooleanField(default=False) 
     date_added = models.DateTimeField(auto_now_add=True)
     responsible_user = models.ForeignKey(Employee, on_delete=models.CASCADE)  # Usuário responsável
@@ -181,7 +178,6 @@ class CartItem(models.Model):
 class Stock(models.Model):
     product = models.OneToOneField(Product, on_delete=models.CASCADE)  # Cada produto tem um estoque
     quantity = models.PositiveIntegerField(default=0)  # Quantidade no estoque
-    acquisition_value = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)  # Valor de aquisição
     available = models.BooleanField(default=False) 
     date_added = models.DateTimeField(auto_now_add=True)
     responsible_user = models.ForeignKey(Employee, on_delete=models.CASCADE)  # Usuário responsável
@@ -204,7 +200,7 @@ class Stock(models.Model):
 class Notification(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     employee  = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='notifications')
-    product = models.ForeignKey(Employee, on_delete=models.SET_NULL, null=True)
+    product = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True)
     message = models.CharField(max_length=255)
     is_read = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
