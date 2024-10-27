@@ -5,7 +5,7 @@ from rest_framework import viewsets, status
 from rest_framework.authentication import TokenAuthentication
 
 from datetime import datetime
-from people.models import Employee
+from people.models import Employee, Notification
 from orders.models import Product
 from orders.models import Stock, Sale, Cart, CartItem
 from orders.serializers import SaleSerializer
@@ -148,6 +148,7 @@ class StockManagerViewSet(viewsets.ModelViewSet):
                 'price': item.product.price,
                 'quantity': item.quantity,
                 'is_available': item.available,  # Quantidade no estoque
+                'acquisition_value': item.acquisition_value,
                 'responsible_user': item.responsible_user.name,  # Acessa o nome do responsável
             })
 
@@ -157,7 +158,7 @@ class StockManagerViewSet(viewsets.ModelViewSet):
     def create(self, request, *args, **kwargs):
         # Verifica se o usuário está autenticado
         if not request.user.is_authenticated:
-            return Response({"error": "Você precisa estar autenticado para realizar esta ação."}, status=status.HTTP_403_FORBIDDEN)
+            return Response({"error": "você precisa estar autenticado para realizar esta ação."}, status=status.HTTP_403_FORBIDDEN)
 
         # Obtém o funcionário associado ao usuário autenticado
         try:
@@ -165,23 +166,22 @@ class StockManagerViewSet(viewsets.ModelViewSet):
         except Employee.DoesNotExist:
             return Response({"error": "Funcionário não encontrado."}, status=status.HTTP_404_NOT_FOUND)
 
+        employee = Employee.objects.get(user=request.user)
         # Coleta os dados da requisição
         product_id = request.data.get('product_id')
-        quantity = request.data.get('quantity')
+        quantity = int(request.data.get('quantity'))
+        acquisition_value = request.data.get('acquisition_value', 0)
         description = request.data.get('description', '')
         available = request.data.get('is_available')
 
-        # Valida se a quantidade é um número válido
-        try:
-            quantity = int(quantity)
-        except (ValueError, TypeError):
-            return Response({"error": "A quantidade deve ser um número inteiro."}, status=status.HTTP_400_BAD_REQUEST)
-
         # Verifica se o produto já está no estoque
-        if Stock.objects.filter(product_id=product_id).exists():
+        try:
+            stock = Stock.objects.get(product_id=product_id)
             return Response({"error": "O produto já está adicionado ao estoque. Use outro endpoint para ajustar a quantidade."}, status=status.HTTP_400_BAD_REQUEST)
+        except Stock.DoesNotExist:
+            pass
 
-        # Obtém o produto associado ao ID fornecido
+        # Verifica se o produto existe
         try:
             product = Product.objects.get(id=product_id)
         except Product.DoesNotExist:
@@ -191,10 +191,11 @@ class StockManagerViewSet(viewsets.ModelViewSet):
         stock_data = {
             'product': product.id,
             'quantity': quantity,
-                'available': available,
-                'description': description,
-                'responsible_user': employee.id,  # O responsável é o funcionário autenticado
-            }
+            'acquisition_value': acquisition_value,
+            'available': available,
+            'description': description,
+            'responsible_user': employee.id,  # O responsável é o funcionário autenticado
+        }
 
         # Serializa os dados
         serializer = self.get_serializer(data=stock_data)
@@ -204,7 +205,7 @@ class StockManagerViewSet(viewsets.ModelViewSet):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
+
     def destroy(self, request, *args, **kwargs):
         # Obtém o ID do produto a ser excluído
         product_id = kwargs.get('pk')
@@ -228,7 +229,7 @@ class StockManagerViewSet(viewsets.ModelViewSet):
             return Response({"error": "Produto não encontrado"}, status=status.HTTP_404_NOT_FOUND)
 
 
-        return Response({"message": "good"},status=status.HTTP_204_NO_CONTENT)
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 
@@ -246,7 +247,6 @@ class StockManagerViewSet(viewsets.ModelViewSet):
         # Tenta obter o produto relacionado ao item de estoque
         try:
             product = Product.objects.get(id=product_id)
-            notification = Notification.objects.get(product_id=product)
         except Product.DoesNotExist:
             return Response({"error": "Produto não encontrado."}, status=status.HTTP_404_NOT_FOUND)
 
@@ -264,13 +264,8 @@ class StockManagerViewSet(viewsets.ModelViewSet):
         product.save()
 
         stock_item.quantity += new_quantity
+        stock_item.acquisition_value = request.data.get('acquisition_value', stock_item.acquisition_value)
         stock_item.save()
-
-        if int(stock_item.quantity > 10):
-            notification.is_read = True
-            notification.save()
-
-
 
         # Serializa os dados atualizados
         serializer = self.get_serializer(stock_item)
@@ -283,26 +278,34 @@ class TotalSalesAndAcquisitionValueView(APIView):
         try:
             total_sales_value = 0
             total_acquisition_value = 0
+            total_spend = 0
 
             # Itera por todas as vendas e calcula o valor total de vendas e de aquisição
             sales = SaleHistory.objects.all()
             for sale in sales:
+               
                 total_sales_value += sale.sale_quantity * sale.product_price
                 total_acquisition_value += sale.sale_quantity * sale.product_acquisition_value
 
-            # Calcula o lucro e a margem apenas se houver vendas
+            # Calcula o total de custos de aquisição de todos os produtos
+            products = ProductHistory.objects.all()
+            for product in products:
+                total_spend += product.acquisition_value
+
+            # Calcula o lucro (profit) apenas se houver vendas
             if total_sales_value > 0:
-                profit = total_sales_value - total_acquisition_value
+                profit = total_sales_value - total_spend
                 margin = (profit / total_sales_value) * 100
             else:
                 profit = 0  # Se não houver vendas, o lucro é zero
-                margin = 0  # E a margem também é zero
+                margin = 0   # E a margem também é zero
 
             return Response({
                 "total_sales_value": total_sales_value,
                 "total_acquisition_value": total_acquisition_value,
                 "profit": profit,
                 "margin": margin,
+                'total_spend': total_spend
             }, status=status.HTTP_200_OK)
 
         except Exception as e:
@@ -385,7 +388,7 @@ class SaleViewSet(viewsets.ModelViewSet):
 
               # Verifica se o estoque ficou abaixo de 10 e cria uma notificação
             if int(stock.quantity) < 10:
-                self.create_notification(employee, product.name, product)
+                self.create_notification(employee, product.name)
 
             self.clear_cart(request)
 
@@ -408,14 +411,13 @@ class SaleViewSet(viewsets.ModelViewSet):
         return Response({'message': 'Carrinho esvaziado com sucesso'}, status=status.HTTP_200_OK)
 
    
-    def create_notification(self, employee, product_name, product):
+    def create_notification(self, employee, product_name):
         """Cria uma notificação quando o estoque está abaixo de 10"""
         notification_message = f"O produto '{product_name}' está abaixo de 10 unidades em estoque."
         Notification.objects.create(
             employee=employee,  # Assumindo que você tem um campo user em Notification que referencia o empregado
             message=notification_message,
-            created_at=datetime.now(),  # Supondo que você tenha um campo 'created_at' em Notification
-            product=product
+            created_at=datetime.now()  # Supondo que você tenha um campo 'created_at' em Notification
         )
 
 
@@ -507,6 +509,46 @@ class AggregateSalesByDateViewSet(viewsets.ViewSet):
         )
         return Response(list(sales))
     
+
+
+# class StockEntryView(APIView):
+#     authentication_classes  = [TokenAuthentication]
+#     permission_classes = [IsAuthenticated]
+
+
+#     def post(self, request):
+#         product_id = request.data.get("product_id")
+
+#         quantity = request.data.get("quantity")
+
+#         reponsible_user = request.user.employee
+       
+
+
+
+#         try:
+#             product = Product.objects.get(id=product_id)
+#         except Product.DoesNotExist:
+#             return Response({
+#                 'error': 'Produto nao encontrado'
+#             }, status=status.HTTP_404_NOT_FOUND)
+        
+#         stock_entry = Stock.objects.create(
+#             product = product,
+#             quantity=quantity,
+#             responsible_user = reponsible_user
+#         )
+
+
+#         return Response({
+#             'message': 'Produto Adicionado ao estoque com sucesso.',
+#             'product': {
+#                 'id': stock_entry.product.id,
+#                 'name': stock_entry.product.name,
+#                 'quantity': stock_entry.quantity,
+#                 'price': stock_entry.price
+#             }
+#         }, status=status.HTTP_201_CREATED)
 
 
 from rest_framework import viewsets, status
@@ -647,49 +689,5 @@ class CartViewSet(viewsets.ViewSet):
         cart_item = get_object_or_404(CartItem, cart=cart, id=pk)
         cart_item.delete()
 
-        return Response({'message': 'Produto removido do carrinho'}, status=status.HTTP_204_NO_CONTENT)    
-    
+        return Response({'message': 'Produto removido do carrinho'}, status=status.HTTP_204_NO_CONTENT)
 
-
-from rest_framework.decorators import api_view
-from .models import Notification
-from .serializers import NotificationSerializer
-from rest_framework.decorators import permission_classes
-
-@api_view(['GET'])
-@permission_classes([IsAuthenticated])
-def employee_notifications(request):
-    if not request.user.is_authenticated:
-        return Response({
-            'error': "Usuário não autenticado."
-        }, status=status.HTTP_401_UNAUTHORIZED)
-    try:
-        # Busca o funcionário associado ao usuário
-        #employee = Employee.objects.get(user=request.user)
-
-        # Filtra as notificações não lidas abaixo de 10
-        notifications = Notification.objects.filter(is_read=False)
-        serializer = NotificationSerializer(notifications, many=True)
-        return Response(serializer.data)
-    
-    except Employee.DoesNotExist:
-        return Response({'error': 'Funcionário não encontrado.'}, status=status.HTTP_404_NOT_FOUND)
-    except Exception as e:
-        return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
-
-@api_view(['PATCH'])
-def mark_as_read(request, notification_id):
-    try:
-        employee = Employee.objects.get(user=request.user)
-        notification = Notification.objects.get(id=notification_id, 
-                                                employee=employee)
-    except Notification.DoesNotExist:
-        return Response({
-            'error': "Notificação não encontrada."
-        }, status=status.HTTP_404_NOT_FOUND)
-    
-    notification.is_read = True 
-    notification.save()
-    serializer = NotificationSerializer(notification)
-    return Response(serializer.data)
