@@ -148,7 +148,6 @@ class StockManagerViewSet(viewsets.ModelViewSet):
                 'price': item.product.price,
                 'quantity': item.quantity,
                 'is_available': item.available,  # Quantidade no estoque
-                'acquisition_value': item.acquisition_value,
                 'responsible_user': item.responsible_user.name,  # Acessa o nome do responsável
             })
 
@@ -170,7 +169,6 @@ class StockManagerViewSet(viewsets.ModelViewSet):
         # Coleta os dados da requisição
         product_id = request.data.get('product_id')
         quantity = int(request.data.get('quantity'))
-        acquisition_value = request.data.get('acquisition_value', 0)
         description = request.data.get('description', '')
         available = request.data.get('is_available')
 
@@ -191,7 +189,6 @@ class StockManagerViewSet(viewsets.ModelViewSet):
         stock_data = {
             'product': product.id,
             'quantity': quantity,
-            'acquisition_value': acquisition_value,
             'available': available,
             'description': description,
             'responsible_user': employee.id,  # O responsável é o funcionário autenticado
@@ -264,9 +261,26 @@ class StockManagerViewSet(viewsets.ModelViewSet):
         product.save()
 
         stock_item.quantity += new_quantity
-        stock_item.acquisition_value = request.data.get('acquisition_value', stock_item.acquisition_value)
         stock_item.save()
 
+        if int(stock_item.quantity) > 10:
+            try:
+                # Filtra notificações pelo `product_id`
+                notifications = Notification.objects.filter(product_id=product)
+                
+                if not notifications.exists():
+                    return Response({"error": "O produto não foi notificado"}, status=status.HTTP_400_BAD_REQUEST)
+
+                # Atualiza o campo `is_read` de cada notificação e salva
+                for notification in notifications:
+                    notification.is_read = True
+                    notification.save()
+
+            except Notification.DoesNotExist:
+                return Response({"error": "O produto não foi notificado"}, status=status.HTTP_400_BAD_REQUEST)
+
+
+       
         # Serializa os dados atualizados
         serializer = self.get_serializer(stock_item)
 
@@ -651,3 +665,48 @@ class CartViewSet(viewsets.ViewSet):
         return Response({'message': 'Produto removido do carrinho'}, status=status.HTTP_204_NO_CONTENT)
 
 
+
+
+
+from rest_framework.decorators import api_view
+from .models import Notification
+from .serializers import NotificationSerializer
+from rest_framework.decorators import permission_classes
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def employee_notifications(request):
+    if not request.user.is_authenticated:
+        return Response({
+            'error': "Usuário não autenticado."
+        }, status=status.HTTP_401_UNAUTHORIZED)
+    try:
+        # Busca o funcionário associado ao usuário
+        #employee = Employee.objects.get(user=request.user)
+
+        # Filtra as notificações abaixo de 10
+        notifications = Notification.objects.filter(is_read=False)
+        serializer = NotificationSerializer(notifications, many=True)
+        return Response(serializer.data)
+    
+    except Employee.DoesNotExist:
+        return Response({'error': 'Funcionário não encontrado.'}, status=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
+        return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['PATCH'])
+def mark_as_read(request, notification_id):
+    try:
+        employee = Employee.objects.get(user=request.user)
+        notification = Notification.objects.get(id=notification_id, 
+                                                employee=employee)
+    except Notification.DoesNotExist:
+        return Response({
+            'error': "Notificação não encontrada."
+        }, status=status.HTTP_404_NOT_FOUND)
+    
+    notification.is_read = True 
+    notification.save()
+    serializer = NotificationSerializer(notification)
+    return Response(serializer.data)
