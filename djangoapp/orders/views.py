@@ -5,7 +5,7 @@ from rest_framework import viewsets, status
 from rest_framework.authentication import TokenAuthentication
 
 from datetime import datetime
-from people.models import Employee, Notification
+from people.models import Employee
 from orders.models import Product
 from orders.models import Stock, Sale, Cart, CartItem
 from orders.serializers import SaleSerializer
@@ -15,7 +15,7 @@ from orders.serializers import StockManagerSerializer
 from django.shortcuts import get_object_or_404
 from rest_framework.decorators import action
 from .serializers import ProductSerializer
-from .models import ProductHistory
+from .models import ProductHistory, Notification
 
 
 class ProductViewSet(viewsets.ModelViewSet):
@@ -510,47 +510,6 @@ class AggregateSalesByDateViewSet(viewsets.ViewSet):
         return Response(list(sales))
     
 
-
-# class StockEntryView(APIView):
-#     authentication_classes  = [TokenAuthentication]
-#     permission_classes = [IsAuthenticated]
-
-
-#     def post(self, request):
-#         product_id = request.data.get("product_id")
-
-#         quantity = request.data.get("quantity")
-
-#         reponsible_user = request.user.employee
-       
-
-
-
-#         try:
-#             product = Product.objects.get(id=product_id)
-#         except Product.DoesNotExist:
-#             return Response({
-#                 'error': 'Produto nao encontrado'
-#             }, status=status.HTTP_404_NOT_FOUND)
-        
-#         stock_entry = Stock.objects.create(
-#             product = product,
-#             quantity=quantity,
-#             responsible_user = reponsible_user
-#         )
-
-
-#         return Response({
-#             'message': 'Produto Adicionado ao estoque com sucesso.',
-#             'product': {
-#                 'id': stock_entry.product.id,
-#                 'name': stock_entry.product.name,
-#                 'quantity': stock_entry.quantity,
-#                 'price': stock_entry.price
-#             }
-#         }, status=status.HTTP_201_CREATED)
-
-
 from rest_framework import viewsets, status
 from rest_framework.response import Response
 from django.db.models import Sum, F
@@ -690,4 +649,5 @@ class CartViewSet(viewsets.ViewSet):
         cart_item.delete()
 
         return Response({'message': 'Produto removido do carrinho'}, status=status.HTTP_204_NO_CONTENT)
+
 
