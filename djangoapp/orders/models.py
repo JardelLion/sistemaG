@@ -6,6 +6,9 @@ from django.dispatch import receiver
 from django.utils import timezone
 import uuid
 from django.contrib.auth.models import User
+from django.shortcuts import get_object_or_404
+from django.http import HttpResponse
+    
 # Create your models here.
 class Product(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -39,9 +42,12 @@ class Sale(models.Model):
     sale_quantity = models.PositiveIntegerField()  # Quantidade vendida
     date = models.DateField(auto_now_add=True)
     employee = models.ForeignKey(Employee, on_delete=models.CASCADE)
+    is_archived = models.BooleanField(default=False)
+    archived_at = models.DateTimeField(null=True, blank=True)
 
     def __str__(self) -> str:
         return f"{self.product.name} - {self.sale_quantity} unidades"
+    
 
     def save(self, *args, **kwargs):
         # Verifica se há estoque suficiente
@@ -95,7 +101,7 @@ class SaleHistory(models.Model):
 
     
     sale_quantity = models.PositiveIntegerField()
-    sale_price = models.DecimalField(max_digits=10, decimal_places=2)  # Preço total da venda
+    sale_total_value = models.DecimalField(max_digits=10, decimal_places=2)  # Preço total da venda
   
     employee = models.ForeignKey(Employee, on_delete=models.SET_NULL, null=True, blank=True)
     employee_name = models.CharField(max_length=255)

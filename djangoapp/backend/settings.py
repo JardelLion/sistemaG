@@ -116,9 +116,6 @@ CORS_ALLOWED_ORIGINS = [
     'http://localhost:3000',
 ]
 
-   
-   
-
 # allow the specific method to use
 CORS_ALLOW_METHODS = [
     'GET',

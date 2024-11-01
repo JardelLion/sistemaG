@@ -24,7 +24,7 @@ class ProductViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def list(self, request, *args, **kwargs):
-        queryset = self.get_queryset()
+        queryset = self.get_queryset().order_by('name')
         serializer = self.get_serializer(queryset, many=True)
 
         # Para cada produto, buscar a quantidade no próprio produto e o valor de aquisição
@@ -51,6 +51,8 @@ class ProductViewSet(viewsets.ModelViewSet):
         return Response(filtered_products)
     
      # Desabilitar os métodos padrão de criação, atualização e deleção
+    
+    
     def create(self, request, *args, **kwargs):
         return Response({'error': 'Método não permitido.'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
@@ -136,8 +138,8 @@ class StockManagerViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def list(self, request, *args, **kwargs):
-        # Obtém todos os objetos de Stock
-        stock_items = self.get_queryset()
+        # Obtém todos os objetos de Stock ordenados pelo nome do produto
+        stock_items = self.get_queryset().select_related('product').order_by('product__name')
 
         # Cria uma lista personalizada com os detalhes que deseja retornar
         custom_data = []
@@ -153,7 +155,6 @@ class StockManagerViewSet(viewsets.ModelViewSet):
 
         # Retorna a resposta com os dados customizados
         return Response(custom_data)
-
     def create(self, request, *args, **kwargs):
         # Verifica se o usuário está autenticado
         if not request.user.is_authenticated:
@@ -297,9 +298,10 @@ class TotalSalesAndAcquisitionValueView(APIView):
 
             # Itera por todas as vendas e calcula o valor total de vendas e de aquisição
             sales = SaleHistory.objects.all()
+
             for sale in sales:
                
-                total_sales_value += sale.sale_quantity * sale.product_price
+                total_sales_value += sale.sale_total_value
                 total_acquisition_value += (sale.sale_quantity * sale.product_acquisition_value)
 
             #
@@ -444,35 +446,27 @@ class SalesByEmployeeWithIdViewSet(viewsets.ViewSet):
     permission_classes = [IsAuthenticated]
 
     def list(self, request, id=None):
-        # Se o ID do funcionário não for fornecido, retorne um erro
         if id is None:
             return Response({"detail": "Employee ID is required."}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            # Tenta obter o funcionário pelo ID
             employee = Employee.objects.get(id=id)
         except Employee.DoesNotExist:
             raise NotFound("Funcionário não encontrado.")
 
-        # Consulta as vendas associadas ao funcionário
+        # Consulta apenas vendas não arquivadas
         sales = (
             Sale.objects
-            .filter(employee=employee)  # Filtra vendas pelo funcionário
-            .select_related('product')   # Assume que há uma relação com Product
-            .values(
-                'id',  # ID da venda
-                'product__name',  # Nome do produto
-                'sale_quantity',  # Quantidade vendida
-                'date',  # Data da venda
-                'product__price'
-            )
+            .filter(employee=employee, is_archived=False)  # Exclui vendas arquivadas
+            .select_related('product')
+            .values('id', 'product__name', 'sale_quantity', 'date', 'product__price')
+            .order_by("product__name")
         )
 
-        # Dicionário para agrupar as vendas por produto e data
-        sales_summary = defaultdict(lambda: defaultdict(lambda: {'quantity': 0, 'ids': []}))  
+        sales_summary = defaultdict(lambda: defaultdict(lambda: {'quantity': 0, 'ids': []}))
         total_value = 0.0
 
-        # Itera pelas vendas e agrupa por produto e data
+        # Agrupa e calcula o total de vendas e valores
         for sale in sales:
             product_name = sale['product__name']
             sale_date = sale['date']
@@ -480,30 +474,34 @@ class SalesByEmployeeWithIdViewSet(viewsets.ViewSet):
             product_price = float(sale['product__price'])
             sale_id = sale['id']
 
-            # Agrupa por produto e data, somando as quantidades e armazenando os IDs
             sales_summary[product_name][sale_date]['quantity'] += sale_quantity
             sales_summary[product_name][sale_date]['ids'].append(sale_id)
 
-            # Calcula o valor total da venda
+            # Incrementa o valor total com base na quantidade e preço de cada venda
             total_value += product_price * sale_quantity
 
-        # Montar a lista final de vendas agrupadas por produto e data, incluindo os IDs
         sales_list = []
         for product, dates in sales_summary.items():
             for date, data in dates.items():
+                # Calcula o total para cada agrupamento de produto e data
+                total_product_value = sum(
+                    sale['sale_quantity'] * sale['product__price'] for sale in sales if sale['product__name'] == product and sale['date'] == date
+                )
                 sales_list.append({
                     'product_name': product,
                     'date': date,
                     'total_quantity': data['quantity'],
-                    'ids': data['ids'],  # Inclui a lista de IDs
-                    'total_value': data['quantity'] * product_price  # Valor total por produto
+                    'ids': data['ids'],
+                    'total_value': total_product_value
                 })
 
-        # Ordenar a lista de vendas pela data, do menor para o maior
         sales_list_sorted = sorted(sales_list, key=itemgetter('date'))
 
-        # Retorna as vendas agrupadas como resposta
-        return Response({"employee_id": id, "sales": sales_list_sorted, 'total_sales': total_value}, status=status.HTTP_200_OK)
+        return Response({
+            "employee_id": id,
+            "sales": sales_list_sorted,
+            'total_sales': total_value
+        }, status=status.HTTP_200_OK)
 
 class AggregateSalesByDateViewSet(viewsets.ViewSet):
     permission_classes = [IsAuthenticated]
