@@ -88,6 +88,16 @@ class ProductViewSet(viewsets.ModelViewSet):
             else:
                 return Response({'error': 'Acquisition value is required.'}, status=status.HTTP_400_BAD_REQUEST)
 
+            # Adiciona automaticamente o produto ao estoque
+            Stock.objects.create(
+                product=product,
+                quantity=product_quantity,
+                available=True,  # ou `False`, conforme sua lógica
+                description=f'Estoque inicial do produto {product.name}',
+                responsible_user=request.user.employee if hasattr(request.user, 'employee') else None
+            )
+
+
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
