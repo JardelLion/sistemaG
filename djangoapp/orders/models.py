@@ -27,6 +27,7 @@ class ProductHistory(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     product = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True)
     acquisition_value = models.DecimalField(max_digits=10, decimal_places=2)
+    product_quantity = models.DecimalField(max_digits=10, decimal_places=2)
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True)
 
