@@ -146,7 +146,7 @@ DATABASES = {
          'HOST': 'dpg-cs79j3btq21c73cqdbe0-a.oregon-postgres.render.com',  # Host
          'PORT': '5432',  # Porta
      }
- }
+}
 
 
 # database local at localhost
