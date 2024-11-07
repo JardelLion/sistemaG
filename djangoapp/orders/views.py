@@ -76,11 +76,14 @@ class ProductViewSet(viewsets.ModelViewSet):
             
             # Verificar se o campo 'acquisition_value' está presente
             acquisition_value = data.get("acquisition_value")
+            product_quantity = data.get('quantity')
+            
             if acquisition_value is not None:
                 # Criar o histórico do produto
                 ProductHistory.objects.create(
                     product_id=product.id,  # Usar a instância do produto
-                    acquisition_value=acquisition_value  # Valor de aquisição vindo da requisição
+                    acquisition_value=acquisition_value,  # Valor de aquisição vindo da requisição
+                    product_quantity=product_quantity
                 )
             else:
                 return Response({'error': 'Acquisition value is required.'}, status=status.HTTP_400_BAD_REQUEST)
