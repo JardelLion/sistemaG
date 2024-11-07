@@ -77,7 +77,7 @@ class ProductViewSet(viewsets.ModelViewSet):
             # Verificar se o campo 'acquisition_value' está presente
             acquisition_value = data.get("acquisition_value")
             product_quantity = data.get('quantity')
-            
+
             if acquisition_value is not None:
                 # Criar o histórico do produto
                 ProductHistory.objects.create(
@@ -123,6 +123,14 @@ class ProductViewSet(viewsets.ModelViewSet):
             product_history.acquisition_value = acquisition_value
         else:
             product_history.acquisition_value = product.acquisition_value  # Mantenha o valor atual se não houver novo
+
+
+        # Atualiza o valor de quantidade no histórico
+        quantity = data.get('quantity')
+        if quantity is not None:
+            product_history.product_quantity = quantity
+        else:
+            product_history.product_quantity = product.quantity  # Mantenha o valor atual se não houver novo
 
         # Salva as alterações no histórico
         product_history.save()
