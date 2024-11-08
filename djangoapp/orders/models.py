@@ -34,9 +34,6 @@ class ProductHistory(models.Model):
     def __str__(self) -> str:
         return f'{self.acquisition_value:.2f}' 
 
-
-
-
 class Sale(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
@@ -83,7 +80,7 @@ class Sale(models.Model):
             product_acquisition_value =self.product.acquisition_value,
             
             sale_quantity=self.sale_quantity,
-            sale_price=self.product.price * self.sale_quantity,  # Preço total da venda
+            sale_total_value=self.product.price * self.sale_quantity,  # Preço total da venda
 
             employee=self.employee,
             employee_name=self.employee.name,

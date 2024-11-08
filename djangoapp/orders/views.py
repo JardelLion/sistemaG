@@ -111,7 +111,7 @@ class ProductViewSet(viewsets.ModelViewSet):
         data = request.data
         product.name = data.get('name', product.name)
         product.price = data.get('price', product.price)
-        product.quantity = data.get('quantity', product.quantity)
+        product.quantity = (product.quantity + int(data.get('quantity', product.quantity)))
         product.acquisition_value = data.get("acquisition_value", product.acquisition_value)
 
         # Salva as alterações no produto
@@ -128,7 +128,7 @@ class ProductViewSet(viewsets.ModelViewSet):
         # Atualiza o valor de quantidade no histórico
         quantity = data.get('quantity')
         if quantity is not None:
-            product_history.product_quantity = quantity
+            product_history.product_quantity = (product_history.product_quantity + int(quantity))
         else:
             product_history.product_quantity = product.quantity  # Mantenha o valor atual se não houver novo
 
@@ -138,7 +138,7 @@ class ProductViewSet(viewsets.ModelViewSet):
         # Serializa e retorna os dados do produto atualizado
         serializer = self.get_serializer(product)
         return Response(serializer.data, status=status.HTTP_200_OK)
-
+    
 
 
    
@@ -347,15 +347,14 @@ class TotalProductValueView(views.APIView):
         product_history = ProductHistory.objects.all()
       
         for product in product_history:
-            
-            if product.product_id != '':
+           
+            if product.product_id != None:
                 total_value += (product.acquisition_value * product.product_quantity)
 
 
         return Response({
             "total_stock_value": (total_value)
         }, status=status.HTTP_200_OK)
-
 
 
 
