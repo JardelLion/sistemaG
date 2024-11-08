@@ -348,7 +348,7 @@ class TotalProductValueView(views.APIView):
       
         for product in product_history:
             
-            if product.product_id != 'null':
+            if product.product_id != '':
                 total_value += (product.acquisition_value * product.product_quantity)
 
 
