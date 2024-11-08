@@ -344,9 +344,11 @@ class TotalProductValueView(views.APIView):
         total_value = 0
         
         # Itera sobre todos os itens no estoque
-        product_history = Product.objects.all()
+        product_history = ProductHistory.objects.all()
+      
         for product in product_history:
-            total_value += (product.acquisition_value * product.quantity)
+            if product.id != 'null':
+                total_value += (product.acquisition_value * product.product_quantity)
 
 
         return Response({
