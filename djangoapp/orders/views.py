@@ -383,6 +383,14 @@ class SaleViewSet(viewsets.ModelViewSet):
             return Response({"error": "Estoque não encontrado para este produto."}, status=status.HTTP_404_NOT_FOUND)
 
 
+        try:
+            # check if productHistory exist by product
+            product_history = ProductHistory.objects.get(product_id=product_id)
+        except ProductHistory.DoesNotExist:
+            return Response({'error': "Historico de producto nao encontrado"},
+                            status=status.HTTP_404_NOT_FOUND)
+        
+
         # Verifica se o produto está disponível
         if not stock.available:
             return Response({"error": f"O produto {product.name} não está disponível para venda."}, status=status.HTTP_400_BAD_REQUEST)
@@ -402,8 +410,10 @@ class SaleViewSet(viewsets.ModelViewSet):
 
             # Diminui a quantidade no estoque
             stock.quantity -= sale_quantity
-            stock.save() 
+            product_history.product_quantity -= sale_quantity # take less of product_quantity reference by sell
             
+            stock.save() 
+            product_history.save()
             # Obtenha a instância do Employee correspondente ao request.user
             try:
                 employee = Employee.objects.get(user=request.user)  # Certifique-se de que há um relacionamento entre Employee e User
