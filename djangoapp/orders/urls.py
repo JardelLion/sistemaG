@@ -9,6 +9,7 @@ from .views import CartViewSet
 from .views import CartItemsView
 from .views import TotalProductValueView
 from .views import employee_notifications, mark_as_read
+from .views import StockReferenceViewSet
 
 
 router = DefaultRouter()
@@ -18,7 +19,7 @@ router.register(r'products', ProductViewSet) # done
 router.register(r'sales', SaleViewSet, basename="sales")
 router.register(r'aggregate-sales-by-date', AggregateSalesByDateViewSet, basename='aggregate-sales-by-date')
 router.register(r'sales-by-employee', SalesByEmployee, basename='sales-by-employee')
-
+router.register(r'create-stock', StockReferenceViewSet, basename='create a stock')
 
 
 # Inclui as URLs do router

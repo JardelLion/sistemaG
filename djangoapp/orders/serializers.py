@@ -55,3 +55,9 @@ class NotificationSerializer(serializers.ModelSerializer):
         model = Notification
         fields = ['id', 'employee', 'message', 'product_description', 'is_read', 'created_at']
         read_only_fields = ['id', 'employee', 'created_at']
+
+from . models import StockReference
+class StockReferenceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = StockReference
+        fields = '__all__'

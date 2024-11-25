@@ -16,6 +16,7 @@ from django.shortcuts import get_object_or_404
 from rest_framework.decorators import action
 from .serializers import ProductSerializer
 from .models import ProductHistory, Notification
+from rest_framework.viewsets import ModelViewSet
 
 
 class ProductViewSet(viewsets.ModelViewSet):
@@ -139,9 +140,12 @@ class ProductViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(product)
         return Response(serializer.data, status=status.HTTP_200_OK)
     
+from . models import StockReference
+from . serializers import StockReferenceSerializer
+class StockReferenceViewSet(ModelViewSet):
+    queryset = StockReference.objects.all()
+    serializer_class = StockReferenceSerializer
 
-
-   
 
 class StockManagerViewSet(viewsets.ModelViewSet):
     queryset = Stock.objects.all()
