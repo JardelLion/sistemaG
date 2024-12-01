@@ -21,7 +21,6 @@ router.register(r'aggregate-sales-by-date', AggregateSalesByDateViewSet, basenam
 router.register(r'sales-by-employee', SalesByEmployee, basename='sales-by-employee')
 router.register(r'create-stock', StockReferenceViewSet, basename='create a stock')
 
-
 # Inclui as URLs do router
 urlpatterns = [
     path('', include(router.urls)),

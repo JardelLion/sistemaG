@@ -135,31 +135,30 @@ CORS_ALLOW_HEADERS = [
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 import os
 
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',  # Backend do PostgreSQL
+        'NAME': 'sistemag_45pj',                  # Nome do banco de dados
+        'USER': 'sistemag_45pj_user',             # Nome do usuário do banco
+        'PASSWORD': '7bZnel1otx7zTFfho5jLIMkFW503mgES',  # Senha do banco
+        'HOST': 'dpg-ct642t5umphs73927ecg-a.oregon-postgres.render.com',  # Host do banco
+        'PORT': '5432',                           # Porta padrão do PostgreSQL
+    }
+}
 
-#db host at render
+
+
+# # database local at localhost
 # DATABASES = {
 #      'default': {
-#          'ENGINE': 'django.db.backends.postgresql',
-#          'NAME': 'sistemag',  # Nome do banco de dados
-#          'USER': 'lion',  # Nome do usuário
-#          'PASSWORD': 'UAeEPGWYCaUrSTIDbDS52Lu1xQgChLeC',  # Senha
-#          'HOST': 'dpg-cs79j3btq21c73cqdbe0-a.oregon-postgres.render.com',  # Host
-#          'PORT': '5432',  # Porta
+#          'ENGINE':'django.db.backends.postgresql',
+#          'NAME':'sistemag',
+#          'USER':'postgres',
+#          "PASSWORD":'@jardeljr.7',
+#          'HOST':'localhost',
+#          'PORT':'5432'
 #      }
-# }
-
-
-# database local at localhost
-DATABASES = {
-     'default': {
-         'ENGINE':'django.db.backends.postgresql',
-         'NAME':'sistemag',
-         'USER':'postgres',
-         "PASSWORD":'@jardeljr.7',
-         'HOST':'localhost',
-         'PORT':'5432'
-     }
- }
+#  }
 
       
 
