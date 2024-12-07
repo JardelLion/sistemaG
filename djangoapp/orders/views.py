@@ -235,7 +235,8 @@ class StockManagerViewSet(viewsets.ModelViewSet):
 
         # Tenta obter o objeto de estoque relacionado ao produto
         try:
-            stock_item = Stock.objects.get(product_id=product_id)
+            stock_reference = StockReference.objects.filter(is_active=True).first()
+            stock_item = Stock.objects.get(product_id=product_id, stock_reference_id=stock_reference)
         except Stock.DoesNotExist:
             return Response({"error": "Produto não encontrado no estoque."}, status=status.HTTP_404_NOT_FOUND)
 
@@ -263,7 +264,8 @@ class StockManagerViewSet(viewsets.ModelViewSet):
 
         # Tenta obter o item de estoque existente
         try:
-            stock_item = Stock.objects.get(product_id=product_id)
+            stock_reference = StockReference.objects.filter(is_active=True).first()
+            stock_item = Stock.objects.get(product_id=product_id, stock_reference_id=stock_reference)
         except Stock.DoesNotExist:
             return Response({"error": "Produto não encontrado no estoque."}, status=status.HTTP_404_NOT_FOUND)
 
@@ -392,7 +394,8 @@ class SaleViewSet(viewsets.ModelViewSet):
 
         try:
             # Verifica se o estoque existe para o produto
-            stock = Stock.objects.get(product=product)
+            stock_reference = StockReference.objects.filter(is_active=True).first()
+            stock = Stock.objects.get(product=product, stock_reference_id=stock_reference)
         except Stock.DoesNotExist:
             return Response({"error": "Estoque não encontrado para este produto."}, status=status.HTTP_404_NOT_FOUND)
 
@@ -420,6 +423,7 @@ class SaleViewSet(viewsets.ModelViewSet):
                 employee_id=employee_id,
                 product=product,
                 sale_quantity=sale_quantity,
+                stock_reference_id=stock_reference
             )
 
             # Diminui a quantidade no estoque

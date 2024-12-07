@@ -34,8 +34,22 @@ class ProductHistory(models.Model):
     def __str__(self) -> str:
         return f'{self.acquisition_value:.2f}' 
 
+
+class StockReference(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    name = models.CharField(max_length=255, unique=True)  # Nome do estoque
+    description = models.TextField(blank=True, null=True)  # Descrição opcional
+    is_active = models.BooleanField(null=False, default=False)
+    created_at = models.DateTimeField(auto_now_add=True)  # Data de criação
+    updated_at = models.DateTimeField(auto_now=True)  # Última atualização
+
+    def __str__(self):
+        return self.name
+
+
 class Sale(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    stock_reference = models.ForeignKey(StockReference, on_delete=models.CASCADE) 
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     sale_quantity = models.PositiveIntegerField()  # Quantidade vendida
     date = models.DateField(auto_now_add=True)
@@ -152,16 +166,7 @@ class CartItem(models.Model):
     def __str__(self):
         return f'{self.product.name} ({self.quantity}) in {self.cart.id}'
     
-class StockReference(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    name = models.CharField(max_length=255, unique=True)  # Nome do estoque
-    description = models.TextField(blank=True, null=True)  # Descrição opcional
-    is_active = models.BooleanField(null=False, default=False)
-    created_at = models.DateTimeField(auto_now_add=True)  # Data de criação
-    updated_at = models.DateTimeField(auto_now=True)  # Última atualização
 
-    def __str__(self):
-        return self.name
 class Stock(models.Model):
     stock_reference = models.ForeignKey(StockReference, on_delete=models.CASCADE)  # Referência ao estoque ativo
     product = models.OneToOneField(Product, on_delete=models.CASCADE)  # Cada produto tem um estoque
