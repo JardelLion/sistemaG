@@ -23,17 +23,6 @@ class Product(models.Model):
     def __str__(self) -> str:
         return self.name
     
-class ProductHistory(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    product = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True)
-    acquisition_value = models.DecimalField(max_digits=10, decimal_places=2)
-    product_quantity = models.DecimalField(max_digits=10, decimal_places=2)
-    created_at = models.DateTimeField(default=timezone.now)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    def __str__(self) -> str:
-        return f'{self.acquisition_value:.2f}' 
-
 
 class StockReference(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -45,6 +34,21 @@ class StockReference(models.Model):
 
     def __str__(self):
         return self.name
+
+    
+class ProductHistory(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    product = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True)
+    stock_reference = models.ForeignKey(StockReference, on_delete=models.CASCADE) 
+    acquisition_value = models.DecimalField(max_digits=10, decimal_places=2)
+    product_quantity = models.DecimalField(max_digits=10, decimal_places=2)
+    created_at = models.DateTimeField(default=timezone.now)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self) -> str:
+        return f'{self.acquisition_value:.2f}' 
+
+
 
 
 class Sale(models.Model):
@@ -65,7 +69,8 @@ class Sale(models.Model):
         # Verifica se há estoque suficiente
         from orders.models import Stock
         try:
-            stock = Stock.objects.get(product=self.product)
+            stock_reference = StockReference.objects.filter(is_active=True).first()
+            stock = Stock.objects.get(product=self.product, stock_reference=stock_reference.id)
         except Stock.DoesNotExist:
             raise ValueError("Produto não encontrado no estoque.")
         
@@ -87,7 +92,6 @@ class Sale(models.Model):
         # Adiciona o histórico de vendas
         SaleHistory.objects.create(
             sale=self,
-            
             product=self.product,
             product_name=self.product.name,
             product_price=self.product.price,  # Supondo que o Product tenha um campo de preço
@@ -99,12 +103,14 @@ class Sale(models.Model):
             employee=self.employee,
             employee_name=self.employee.name,
             employee_email=self.employee.user.email,
-            employee_address=self.employee.address
+            employee_address=self.employee.address,
+            stock_reference=self.stock_reference
         )
 
 
 class SaleHistory(models.Model):
     sale = models.ForeignKey(Sale, on_delete=models.SET_NULL, null=True, blank=True, related_name='history')
+    stock_reference = models.ForeignKey(StockReference, on_delete=models.CASCADE)
     
     product = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True, blank=True)
     product_name = models.CharField(max_length=255)
@@ -169,7 +175,7 @@ class CartItem(models.Model):
 
 class Stock(models.Model):
     stock_reference = models.ForeignKey(StockReference, on_delete=models.CASCADE)  # Referência ao estoque ativo
-    product = models.OneToOneField(Product, on_delete=models.CASCADE)  # Cada produto tem um estoque
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)  # Um produto pode estar em vários estoques
     quantity = models.PositiveIntegerField(default=0)  # Quantidade no estoque
     available = models.BooleanField(default=False)
     date_added = models.DateTimeField(auto_now_add=True)
@@ -184,7 +190,7 @@ class Stock(models.Model):
             self.stock_reference = StockReference.objects.filter(is_active=True).first()  # Pega o estoque ativo
 
         # Verifica se o produto já tem uma entrada no estoque
-        if not self.pk and Stock.objects.filter(product=self.product).exists():
+        if not self.pk and Stock.objects.filter(product=self.product, stock_reference=StockReference.objects.filter(is_active=True).first()).exists():
             raise ValueError(f"Estoque para o produto {self.product.name} já foi adicionado.")
 
         # Se for a primeira vez que o estoque é adicionado, subtrai a quantidade do produto

@@ -78,13 +78,15 @@ class ProductViewSet(viewsets.ModelViewSet):
             # Verificar se o campo 'acquisition_value' está presente
             acquisition_value = data.get("acquisition_value")
             product_quantity = data.get('quantity')
+            stock_reference_id = StockReference.objects.filter(is_active=True).first()
 
             if acquisition_value is not None:
                 # Criar o histórico do produto
                 ProductHistory.objects.create(
                     product_id=product.id,  # Usar a instância do produto
                     acquisition_value=acquisition_value,  # Valor de aquisição vindo da requisição
-                    product_quantity=product_quantity
+                    product_quantity=product_quantity,
+                    stock_reference=stock_reference_id
                 )
             else:
                 return Response({'error': 'Acquisition value is required.'}, status=status.HTTP_400_BAD_REQUEST)
@@ -155,7 +157,8 @@ class StockManagerViewSet(viewsets.ModelViewSet):
 
     def list(self, request, *args, **kwargs):
         # Obtém todos os objetos de Stock ordenados pelo nome do produto
-        stock_items = self.get_queryset().select_related('product').order_by('product__name')
+        stock_items = Stock.objects.filter(stock_reference__is_active=True).select_related('product').order_by('product__name')
+
 
         # Cria uma lista personalizada com os detalhes que deseja retornar
         custom_data = []
@@ -217,7 +220,7 @@ class StockManagerViewSet(viewsets.ModelViewSet):
             'available': available,
             'description': description,
             'responsible_user': employee.id,  # O responsável é o funcionário autenticado
-            'stock_reference_id': stock_reference.id
+            'stock_reference': stock_reference.id
         }
 
         # Serializa os dados
@@ -324,7 +327,8 @@ class TotalSalesAndAcquisitionValueView(APIView):
             total_spend = 0
 
             # Itera por todas as vendas e calcula o valor total de vendas e de aquisição
-            sales = SaleHistory.objects.all()
+            stock_reference = StockReference.objects.filter(is_active=True).first()
+            sales = SaleHistory.objects.filter(stock_reference=stock_reference)
 
             for sale in sales:
                
@@ -360,7 +364,8 @@ class TotalProductValueView(views.APIView):
         total_value = 0
         
         # Itera sobre todos os itens no estoque
-        product_history = ProductHistory.objects.all()
+        stock_reference = StockReference.objects.filter(is_active=True).first()
+        product_history = ProductHistory.objects.filter(stock_reference=stock_reference)
       
         for product in product_history:
            
@@ -384,6 +389,7 @@ class SaleViewSet(viewsets.ModelViewSet):
         employee_id = request.data.get("employee")
         product_id = request.data.get("product")
         sale_quantity = int(request.data.get("sale_quantity"))
+        stock_reference = StockReference.objects.filter(is_active=True).first()
        
 
         try:
@@ -394,8 +400,12 @@ class SaleViewSet(viewsets.ModelViewSet):
 
         try:
             # Verifica se o estoque existe para o produto
-            stock_reference = StockReference.objects.filter(is_active=True).first()
-            stock = Stock.objects.get(product=product, stock_reference_id=stock_reference)
+            
+            stock = Stock.objects.filter(product=product, stock_reference=stock_reference).first()
+    
+            if not stock:
+                return Response({"error": "Estoque não encontrado para este produto."}, status=status.HTTP_404_NOT_FOUND)
+
         except Stock.DoesNotExist:
             return Response({"error": "Estoque não encontrado para este produto."}, status=status.HTTP_404_NOT_FOUND)
 
@@ -407,7 +417,7 @@ class SaleViewSet(viewsets.ModelViewSet):
             return Response({'error': "Historico de producto nao encontrado"},
                             status=status.HTTP_404_NOT_FOUND)
         
-
+       
         # Verifica se o produto está disponível
         if not stock.available:
             return Response({"error": f"O produto {product.name} não está disponível para venda."}, status=status.HTTP_400_BAD_REQUEST)
@@ -423,7 +433,7 @@ class SaleViewSet(viewsets.ModelViewSet):
                 employee_id=employee_id,
                 product=product,
                 sale_quantity=sale_quantity,
-                stock_reference_id=stock_reference
+                stock_reference_id=stock_reference.id
             )
 
             # Diminui a quantidade no estoque
