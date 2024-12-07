@@ -112,31 +112,6 @@ class SaleHistory(models.Model):
         return f"Histórico de venda: {self.product_name} - {self.sale_quantity} unidades"
 
 
-class Stock(models.Model):
-    product = models.OneToOneField(Product, on_delete=models.CASCADE)  # Cada produto tem um estoque
-    quantity = models.PositiveIntegerField(default=0)  # Quantidade no estoque
-
-    available = models.BooleanField(default=False) 
-    date_added = models.DateTimeField(auto_now_add=True)
-    responsible_user = models.ForeignKey(Employee, on_delete=models.CASCADE)  # Usuário responsável
-
-    def __str__(self):
-        return f"{self.quantity} unidades de {self.product.name} em estoque"
-
-    def save(self, *args, **kwargs):
-        # Verifica se o produto já tem uma entrada no estoque
-        if not self.pk and Stock.objects.filter(product=self.product).exists():
-            raise ValueError(f"Estoque para o produto {self.product.name} já foi adicionado.")
-
-        # Se for a primeira vez que o estoque é adicionado, subtrai a quantidade do produto
-        if not self.pk:
-            self.product.quantity -= self.quantity
-            self.product.save()
-
-        super().save(*args, **kwargs)
-
-
-
 class ActionHistory(models.Model):
   
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
