@@ -156,7 +156,7 @@ class StockReference(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=255, unique=True)  # Nome do estoque
     description = models.TextField(blank=True, null=True)  # Descrição opcional
-    is_active = models.BooleanField(null=False)
+    is_active = models.BooleanField(null=False, default=False)
     created_at = models.DateTimeField(auto_now_add=True)  # Data de criação
     updated_at = models.DateTimeField(auto_now=True)  # Última atualização
 
