@@ -191,8 +191,11 @@ class StockManagerViewSet(viewsets.ModelViewSet):
 
         # Verifica se o produto já está no estoque
         try:
-            stock = Stock.objects.get(product_id=product_id)
-            return Response({"error": "O produto já está adicionado ao estoque. Use outro endpoint para ajustar a quantidade."}, status=status.HTTP_400_BAD_REQUEST)
+            stock_ref = StockReference.objects.filter(is_active=True).first()
+            stock = Stock.objects.get(product_id=product_id, stock_reference_id=stock_ref)
+            if stock:
+                return Response({"error": "O produto já está adicionado ao estoque. Use outro endpoint para ajustar a quantidade."}, status=status.HTTP_400_BAD_REQUEST)
+        
         except Stock.DoesNotExist:
             pass
 
