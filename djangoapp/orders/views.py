@@ -147,34 +147,15 @@ class StockReferenceViewSet(ModelViewSet):
     queryset = StockReference.objects.all()
     serializer_class = StockReferenceSerializer
 
-
 class StockManagerViewSet(viewsets.ModelViewSet):
     queryset = Stock.objects.all()
     serializer_class = StockManagerSerializer
     permission_classes = [IsAuthenticated]
 
-    def list(self, request, *args, **kwargs):
-        # Obtém todos os objetos de Stock ordenados pelo nome do produto
-        stock_items = self.get_queryset().select_related('product').order_by('product__name')
-
-        # Cria uma lista personalizada com os detalhes que deseja retornar
-        custom_data = []
-        for item in stock_items:
-            custom_data.append({
-                'product_id': item.product.id,
-                'product_name': item.product.name,  # Acessa o nome do produto
-                'price': item.product.price,
-                'quantity': item.quantity,
-                'is_available': item.available,  # Quantidade no estoque
-                'responsible_user': item.responsible_user.name,  # Acessa o nome do responsável
-            })
-
-        # Retorna a resposta com os dados customizados
-        return Response(custom_data)
     def create(self, request, *args, **kwargs):
         # Verifica se o usuário está autenticado
         if not request.user.is_authenticated:
-            return Response({"error": "você precisa estar autenticado para realizar esta ação."}, status=status.HTTP_403_FORBIDDEN)
+            return Response({"error": "Você precisa estar autenticado para realizar esta ação."}, status=status.HTTP_403_FORBIDDEN)
 
         # Obtém o funcionário associado ao usuário autenticado
         try:
@@ -182,7 +163,6 @@ class StockManagerViewSet(viewsets.ModelViewSet):
         except Employee.DoesNotExist:
             return Response({"error": "Funcionário não encontrado."}, status=status.HTTP_404_NOT_FOUND)
 
-        employee = Employee.objects.get(user=request.user)
         # Coleta os dados da requisição
         product_id = request.data.get('product_id')
         quantity = int(request.data.get('quantity'))
@@ -202,8 +182,8 @@ class StockManagerViewSet(viewsets.ModelViewSet):
         except Product.DoesNotExist:
             return Response({"error": "Produto não encontrado."}, status=status.HTTP_404_NOT_FOUND)
 
+        # Busca o estoque ativo
         stock_reference = StockReference.objects.filter(is_active=True).first()
-
         if not stock_reference:
             return Response({"error": "Nenhum estoque ativo encontrado."}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -214,7 +194,7 @@ class StockManagerViewSet(viewsets.ModelViewSet):
             'available': available,
             'description': description,
             'responsible_user': employee.id,  # O responsável é o funcionário autenticado
-            'stock_id': stock_reference.id
+            'stock_reference': stock_reference.id  # Associando o estoque ativo
         }
 
         # Serializa os dados
@@ -225,88 +205,6 @@ class StockManagerViewSet(viewsets.ModelViewSet):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    def destroy(self, request, *args, **kwargs):
-        # Obtém o ID do produto a ser excluído
-        product_id = kwargs.get('pk')
-
-        # Tenta obter o objeto de estoque relacionado ao produto
-        try:
-            stock_item = Stock.objects.get(product_id=product_id)
-        except Stock.DoesNotExist:
-            return Response({"error": "Produto não encontrado no estoque."}, status=status.HTTP_404_NOT_FOUND)
-
-        quantity_to_return = stock_item.quantity
-        # Remove o item do estoque
-        stock_item.delete()
-
-        try:
-            product = Product.objects.get(id=product_id)
-            product.quantity += quantity_to_return
-            product.save()
-        
-        except Product.DoesNotExist:
-            return Response({"error": "Produto não encontrado"}, status=status.HTTP_404_NOT_FOUND)
-
-
-        return Response(status=status.HTTP_204_NO_CONTENT)
-
-
-
-
-    def update(self, request, *args, **kwargs):
-        # Obtém o ID do produto para atualização
-        product_id = kwargs.get('pk')
-
-        # Tenta obter o item de estoque existente
-        try:
-            stock_item = Stock.objects.get(product_id=product_id)
-        except Stock.DoesNotExist:
-            return Response({"error": "Produto não encontrado no estoque."}, status=status.HTTP_404_NOT_FOUND)
-
-        # Tenta obter o produto relacionado ao item de estoque
-        try:
-            product = Product.objects.get(id=product_id)
-        except Product.DoesNotExist:
-            return Response({"error": "Produto não encontrado."}, status=status.HTTP_404_NOT_FOUND)
-
-        # Coleta a quantidade a ser adicionada ao estoque
-        new_quantity = int(request.data.get('quantity'))
-        if new_quantity is None:
-            return Response({"error": "Quantidade não fornecida."}, status=status.HTTP_400_BAD_REQUEST)
-
-        # Verifica se a quantidade solicitada é maior do que a disponível no produto
-        if new_quantity > product.quantity:
-            return Response({"error": "A quantidade solicitada é maior do que a disponível no produto."}, status=status.HTTP_400_BAD_REQUEST)
-
-        # Subtrai a quantidade do produto e adiciona ao estoque
-        product.quantity -= new_quantity
-        product.save()
-
-        stock_item.quantity += new_quantity
-        stock_item.save()
-
-        if int(stock_item.quantity) > 10:
-            try:
-                notifications = Notification.objects.filter(product_description=product.description)
-                
-                if not notifications.exists():
-                    return Response({"error": "O produto não foi notificado"}, status=status.HTTP_400_BAD_REQUEST)
-
-                # Atualiza o campo `is_read` de cada notificação e salva
-                for notification in notifications:
-                    notification.is_read = True
-                    notification.save()
-
-            except Notification.DoesNotExist:
-                return Response({"error": "O produto não foi notificado"}, status=status.HTTP_400_BAD_REQUEST)
-
-
-       
-        # Serializa os dados atualizados
-        serializer = self.get_serializer(stock_item)
-
-        return Response(serializer.data, status=status.HTTP_200_OK)
 
 from .models import SaleHistory
 class TotalSalesAndAcquisitionValueView(APIView):

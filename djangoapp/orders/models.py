@@ -163,10 +163,10 @@ class StockReference(models.Model):
     def __str__(self):
         return self.name
 class Stock(models.Model):
-    stock = models.ForeignKey(StockReference, on_delete=models.CASCADE)
+    stock_reference = models.ForeignKey(StockReference, on_delete=models.CASCADE)  # Referência ao estoque ativo
     product = models.OneToOneField(Product, on_delete=models.CASCADE)  # Cada produto tem um estoque
     quantity = models.PositiveIntegerField(default=0)  # Quantidade no estoque
-    available = models.BooleanField(default=False) 
+    available = models.BooleanField(default=False)
     date_added = models.DateTimeField(auto_now_add=True)
     responsible_user = models.ForeignKey(Employee, on_delete=models.CASCADE)  # Usuário responsável
 
@@ -175,8 +175,8 @@ class Stock(models.Model):
 
     def save(self, *args, **kwargs):
         # Atribui automaticamente o estoque ativo se não estiver definido
-        if not self.stock:
-            self.stock = StockReference.objects.filter(is_active=True).first()  # Pega o estoque ativo
+        if not self.stock_reference:
+            self.stock_reference = StockReference.objects.filter(is_active=True).first()  # Pega o estoque ativo
 
         # Verifica se o produto já tem uma entrada no estoque
         if not self.pk and Stock.objects.filter(product=self.product).exists():
