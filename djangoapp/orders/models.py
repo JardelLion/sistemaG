@@ -174,6 +174,10 @@ class Stock(models.Model):
         return f"{self.quantity} unidades de {self.product.name} em estoque"
 
     def save(self, *args, **kwargs):
+        # Atribui automaticamente o estoque ativo se não estiver definido
+        if not self.stock:
+            self.stock = StockReference.objects.filter(is_active=True).first()  # Pega o estoque ativo
+
         # Verifica se o produto já tem uma entrada no estoque
         if not self.pk and Stock.objects.filter(product=self.product).exists():
             raise ValueError(f"Estoque para o produto {self.product.name} já foi adicionado.")

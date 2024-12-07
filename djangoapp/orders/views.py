@@ -140,6 +140,7 @@ class ProductViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(product)
         return Response(serializer.data, status=status.HTTP_200_OK)
     
+
 from . models import StockReference
 from . serializers import StockReferenceSerializer
 class StockReferenceViewSet(ModelViewSet):
@@ -201,6 +202,11 @@ class StockManagerViewSet(viewsets.ModelViewSet):
         except Product.DoesNotExist:
             return Response({"error": "Produto não encontrado."}, status=status.HTTP_404_NOT_FOUND)
 
+        stock_reference = StockReference.objects.filter(is_active=True).first()
+
+        if not stock_reference:
+            return Response({"error": "Nenhum estoque ativo encontrado."}, status=status.HTTP_400_BAD_REQUEST)
+
         # Prepara os dados para o Stock
         stock_data = {
             'product': product.id,
@@ -208,6 +214,7 @@ class StockManagerViewSet(viewsets.ModelViewSet):
             'available': available,
             'description': description,
             'responsible_user': employee.id,  # O responsável é o funcionário autenticado
+            'stock_id': stock_reference.id
         }
 
         # Serializa os dados
