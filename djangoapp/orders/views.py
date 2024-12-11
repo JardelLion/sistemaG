@@ -179,6 +179,19 @@ class StockReferenceViewSet(ModelViewSet):
             return Response({'detail': f'Stock with id {pk} does not exist.'}, status=status.HTTP_404_NOT_FOUND)
 
 
+    @action(detail=True, methods=['post'], url_path='deactivate')
+    def deactivate(self, request, pk=None):
+        instance = self.get_object()
+
+        # Desativa apenas o registro atual
+        instance.is_active = False
+        instance.save()
+
+        # Serializa e retorna a resposta
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
 class StockManagerViewSet(viewsets.ModelViewSet):
     queryset = Stock.objects.all()
     serializer_class = StockManagerSerializer
