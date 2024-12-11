@@ -26,7 +26,8 @@ urlpatterns = [
     # URL patterns para endpoints específicos
 
     path('stock-reference/<uuid:pk>/activate/', StockReferenceViewSet.as_view({'post': 'activate'}), name='stock-reference-activate'),
-    path('stock-reference/<uuid:pk>/delete/', StockReferenceViewSet.as_view({'delete', 'delete'}), name='stock-reference-delete'),
+    path('stock-reference/<uuid:pk>/delete/', StockReferenceViewSet.as_view({'delete': 'destroy'}), name='stock-reference-delete'),
+
     path('static-value/', TotalSalesAndAcquisitionValueView.as_view(), name='total-sales-value'),
     path("employee/<uuid:id>/sales/", SalesByEmployeeWithIdViewSet.as_view({'get': 'list'})),
     path('cart/', CartViewSet.as_view({'get': 'list'})),
