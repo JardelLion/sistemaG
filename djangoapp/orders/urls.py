@@ -11,7 +11,6 @@ from .views import TotalProductValueView
 from .views import employee_notifications, mark_as_read
 from .views import StockReferenceViewSet
 
-
 router = DefaultRouter()
 
 router.register(r'stockmanager', StockManagerViewSet) # done
@@ -27,7 +26,7 @@ urlpatterns = [
     # URL patterns para endpoints específicos
 
     path('stock-reference/<uuid:pk>/activate/', StockReferenceViewSet.as_view({'post': 'activate'}), name='stock-reference-activate'),
-     path('stock-reference/<uuid:pk>/delete/', StockReferenceViewSet.delete_stock, name='stock-reference-delete'),
+    path('stock-reference/<uuid:pk>/delete/', StockReferenceViewSet.as_view({'post', 'delete'}), name='stock-reference-delete'),
     path('static-value/', TotalSalesAndAcquisitionValueView.as_view(), name='total-sales-value'),
     path("employee/<uuid:id>/sales/", SalesByEmployeeWithIdViewSet.as_view({'get': 'list'})),
     path('cart/', CartViewSet.as_view({'get': 'list'})),
