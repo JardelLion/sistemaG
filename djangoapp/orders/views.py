@@ -144,7 +144,7 @@ class ProductViewSet(viewsets.ModelViewSet):
     
 from rest_framework.response import Response
 from rest_framework import status
-from rest_framework.decorators import action
+from rest_framework.decorators import action, api_view
 from .models import StockReference
 from .serializers import StockReferenceSerializer
 from rest_framework.viewsets import ModelViewSet
@@ -167,6 +167,17 @@ class StockReferenceViewSet(ModelViewSet):
         # Serializa e retorna a resposta
         serializer = self.get_serializer(instance)
         return Response(serializer.data, status=status.HTTP_200_OK)
+    
+    @api_view(['DELETE'])
+    def delete_stock(request, pk):
+        try:
+            # Tenta obter o registro e deletá-lo
+            stock = StockReference.objects.get(pk=pk)
+            stock.delete()
+            return Response({'detail': f'Stock with id {pk} has been deleted.'}, status=status.HTTP_200_OK)
+        except StockReference.DoesNotExist:
+            return Response({'detail': f'Stock with id {pk} does not exist.'}, status=status.HTTP_404_NOT_FOUND)
+
 
 class StockManagerViewSet(viewsets.ModelViewSet):
     queryset = Stock.objects.all()
