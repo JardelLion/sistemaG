@@ -142,13 +142,31 @@ class ProductViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(product)
         return Response(serializer.data, status=status.HTTP_200_OK)
     
+from rest_framework.response import Response
+from rest_framework import status
+from rest_framework.decorators import action
+from .models import StockReference
+from .serializers import StockReferenceSerializer
+from rest_framework.viewsets import ModelViewSet
 
-from . models import StockReference
-from . serializers import StockReferenceSerializer
 class StockReferenceViewSet(ModelViewSet):
     queryset = StockReference.objects.all()
     serializer_class = StockReferenceSerializer
 
+    @action(detail=True, methods=['post'], url_path='activate')
+    def activate(self, request, pk=None):
+        instance = self.get_object()
+
+        # Desativa todos os registros com is_active=True
+        StockReference.objects.filter(is_active=True).update(is_active=False)
+
+        # Ativa apenas o registro atual
+        instance.is_active = True
+        instance.save()
+
+        # Serializa e retorna a resposta
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 class StockManagerViewSet(viewsets.ModelViewSet):
     queryset = Stock.objects.all()

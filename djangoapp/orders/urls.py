@@ -24,6 +24,9 @@ router.register(r'create-stock', StockReferenceViewSet, basename='create a stock
 # Inclui as URLs do router
 urlpatterns = [
     path('', include(router.urls)),
+    # URL patterns para endpoints específicos
+
+    path('stock-reference/<uuid:pk>/activate/', StockReferenceViewSet.as_view({'post': 'activate'}), name='stock-reference-activate'),
     path('static-value/', TotalSalesAndAcquisitionValueView.as_view(), name='total-sales-value'),
     path("employee/<uuid:id>/sales/", SalesByEmployeeWithIdViewSet.as_view({'get': 'list'})),
     path('cart/', CartViewSet.as_view({'get': 'list'})),
