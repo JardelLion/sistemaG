@@ -175,6 +175,7 @@ class CartItem(models.Model):
 
 class Stock(models.Model):
     stock_reference = models.ForeignKey(StockReference, on_delete=models.CASCADE)  # Referência ao estoque ativo
+    
     product = models.ForeignKey(Product, on_delete=models.CASCADE)  # Um produto pode estar em vários estoques
     quantity = models.PositiveIntegerField(default=0)  # Quantidade no estoque
     available = models.BooleanField(default=False)
@@ -202,6 +203,7 @@ class Stock(models.Model):
 
 class Notification(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    stock_reference = models.ForeignKey(StockReference, on_delete=models.CASCADE)  # Referência ao estoque ativo
     employee  = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='notifications')
     product_description =  models.CharField(max_length=255)
     message = models.CharField(max_length=255)

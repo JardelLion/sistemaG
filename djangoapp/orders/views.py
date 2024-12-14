@@ -493,7 +493,7 @@ class SaleViewSet(viewsets.ModelViewSet):
 
               # Verifica se o estoque ficou abaixo de 10 e cria uma notificação
             if int(stock.quantity) < 10:
-                self.create_notification(employee, product.name, product.description)
+                self.create_notification(employee, product.name, product.description, stock_reference)
 
             self.clear_cart(request)
 
@@ -516,14 +516,15 @@ class SaleViewSet(viewsets.ModelViewSet):
         return Response({'message': 'Carrinho esvaziado com sucesso'}, status=status.HTTP_200_OK)
 
    
-    def create_notification(self, employee, product_name, product_description):
+    def create_notification(self, employee, product_name, product_description, stock_reference):
         """Cria uma notificação quando o estoque está abaixo de 10"""
         notification_message = f"O produto '{product_name}' está abaixo de 10 unidades em estoque."
         Notification.objects.create(
             employee=employee,  # Assumindo que você tem um campo user em Notification que referencia o empregado
             message=notification_message,
             product_description=product_description,
-            created_at=datetime.now()  # Supondo que você tenha um campo 'created_at' em Notification
+            created_at=datetime.now(),  # Supondo que você tenha um campo 'created_at' em Notification
+            stock_reference_id=stock_reference.id
         )
 
 
@@ -772,7 +773,8 @@ def employee_notifications(request):
     try:
 
         # Filtra as notificações abaixo de 10
-        notifications = Notification.objects.filter(is_read=False)
+        stock_reference = StockReference.objects.filter(is_active=True).first()
+        notifications = Notification.objects.filter(is_read=False, stock_reference=stock_reference)
         serializer = NotificationSerializer(notifications, many=True)
         return Response(serializer.data)
     
