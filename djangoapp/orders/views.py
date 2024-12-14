@@ -86,7 +86,7 @@ class ProductViewSet(viewsets.ModelViewSet):
                     product_id=product.id,  # Usar a instância do produto
                     acquisition_value=acquisition_value,  # Valor de aquisição vindo da requisição
                     product_quantity=product_quantity,
-                    stock_reference=stock_reference_id
+                    stock_reference_id=stock_reference_id
                 )
             else:
                 return Response({'error': 'Acquisition value is required.'}, status=status.HTTP_400_BAD_REQUEST)
