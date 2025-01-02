@@ -26,7 +26,8 @@ SECRET_KEY = 'django-insecure-baj1r(h=tu6bj4*!k4*umw#@^c+eh!4c1n05=3dscm(7vcv8el
 DEBUG = True
 
 ALLOWED_HOSTS = ['sistemag.onrender.com', 'localhost', '127.0.0.1', '[::1]',
-                 'http://localhost:3000']
+                 'http://localhost:3000',
+                 'http://localhost:3001',]
 
 
 # Application definition
@@ -114,6 +115,7 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 CORS_ALLOWED_ORIGINS = [
    "https://sistemag.onrender.com",
     'http://localhost:3000',
+    'http://localhost:3001'
 ]
 
 # allow the specific method to use
@@ -159,9 +161,9 @@ DATABASES = {
 #          'NAME':'sistemag',
 #          'USER':'postgres',
 #          "PASSWORD":'@jardeljr.7',
-#          'HOST':'localhost',
-#          'PORT':'5432'
-#      }
+ #         'HOST':'localhost',
+ #         'PORT':'5432'
+ #     }
 #  }
 
       
