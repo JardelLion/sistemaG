@@ -25,9 +25,8 @@ SECRET_KEY = 'django-insecure-baj1r(h=tu6bj4*!k4*umw#@^c+eh!4c1n05=3dscm(7vcv8el
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['sistemag.onrender.com', 'localhost', '127.0.0.1', '[::1]',
-                 'http://localhost:3000']
 
+ALLOWED_HOSTS = ["vuchada.com"]
 
 # Application definition
 
@@ -112,9 +111,10 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 
 # accept only the port 3000
 CORS_ALLOWED_ORIGINS = [
-   "https://sistemag.onrender.com",
-    'http://localhost:3000',
+   
+    'vuchada.com'
 ]
+
 
 # allow the specific method to use
 CORS_ALLOW_METHODS = [
@@ -138,33 +138,14 @@ import os
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'sistemag_5hfo',
-        'USER': 'sistemag_5hfo_user',
-        'PASSWORD': 'gzs0Eauce4jfBUj2ckylvD30PHs5EKQx',
-        'HOST': 'dpg-ctrb2kbqf0us7385egb0-a.oregon-postgres.render.com',
-        'PORT': '5432',  # Porta padrão do PostgreSQL
-        'OPTIONS': {
-            'sslmode': 'require',  # Para conexões seguras
-        },
+        'NAME': 'pakadohu_sistemag',  # Nome do banco de dados
+        'USER': 'pakadohu_vuchadasistemag',  # Nome do usuário
+        'PASSWORD': 'K3w.SYhNY;%o',  # Senha
+        'HOST': 'localhost',  # Host
+        'PORT': '3306',  # Porta
     }
 }
 
-
-
-
-# # database local at localhost
-#DATABASES = {
-#      'default': {
-#          'ENGINE':'django.db.backends.postgresql',
-#          'NAME':'sistemag',
-#          'USER':'postgres',
-#          "PASSWORD":'@jardeljr.7',
-#          'HOST':'localhost',
-#          'PORT':'5432'
-#      }
-#  }
-
-      
 
 
 # Password validation
