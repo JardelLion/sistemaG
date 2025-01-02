@@ -1,23 +1,20 @@
-from django.db.models import Sum, F
-from rest_framework.response import Response
-from rest_framework.views import APIView
-from rest_framework import viewsets, status
-from rest_framework.authentication import TokenAuthentication
 
+from rest_framework.views import APIView
+from rest_framework import viewsets
 from datetime import datetime
 from people.models import Employee
 from orders.models import Product
 from orders.models import Stock, Sale, Cart, CartItem
 from orders.serializers import SaleSerializer
-
 from rest_framework.permissions import IsAuthenticated
 from orders.serializers import StockManagerSerializer
 from django.shortcuts import get_object_or_404
-from rest_framework.decorators import action
 from .serializers import ProductSerializer
-from .models import ProductHistory, Notification
+from .models import ProductHistory
+from rest_framework.decorators import action, api_view
+from .models import StockReference
+from .serializers import StockReferenceSerializer
 from rest_framework.viewsets import ModelViewSet
-
 
 class ProductViewSet(viewsets.ModelViewSet):
     queryset = Product.objects.all()
@@ -142,12 +139,6 @@ class ProductViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(product)
         return Response(serializer.data, status=status.HTTP_200_OK)
     
-from rest_framework.response import Response
-from rest_framework import status
-from rest_framework.decorators import action, api_view
-from .models import StockReference
-from .serializers import StockReferenceSerializer
-from rest_framework.viewsets import ModelViewSet
 
 class StockReferenceViewSet(ModelViewSet):
     queryset = StockReference.objects.all()
@@ -800,3 +791,69 @@ def mark_as_read(request, notification_id):
     notification.save()
     serializer = NotificationSerializer(notification)
     return Response(serializer.data)
+
+
+
+
+from django.http import HttpResponse, JsonResponse
+from fpdf import FPDF
+from .models import Sale
+from datetime import datetime
+
+class PDF(FPDF):
+    def header(self):
+        self.set_font('Arial', 'B', 12)
+        self.cell(0, 10, 'Relatório do Funcionário', 0, 1, 'C')
+
+    def footer(self):
+        self.set_y(-15)
+        self.set_font('Arial', 'I', 8)
+        self.cell(0, 10, f'Página {self.page_no()}', 0, 0, 'C')
+
+def generate_employee_report(request):
+    # Obtém os parâmetros de ID e data
+    employee_id = request.GET.get('id')
+    report_date = request.GET.get('date')
+
+    if not employee_id or not report_date:
+        return JsonResponse({'error': "Os parâmetros 'id' e 'date' são obrigatórios."}, status=400)
+
+    # Valida o ID do funcionário
+    try:
+        employee = Employee.objects.get(id=employee_id)
+    except Employee.DoesNotExist:
+        return JsonResponse({'error': "Funcionário não encontrado."}, status=404)
+
+    # Converte a data para o formato correto
+    try:
+        report_date = datetime.strptime(report_date, '%Y-%m-%d')
+    except ValueError:
+        return JsonResponse({'error': "Formato de data inválido. Use 'YYYY-MM-DD'."}, status=400)
+
+    # Busca as vendas do funcionário na data
+    sales = Sale.objects.filter(employee=employee, date=report_date)
+
+    # Gera o PDF
+    pdf = PDF()
+    pdf.add_page()
+    pdf.set_font('Arial', '', 12)
+
+    pdf.cell(0, 10, f"Funcionário: {employee.name}", ln=True)
+    pdf.cell(0, 10, f"Relatório para a data: {report_date.strftime('%d/%m/%Y')}", ln=True)
+    pdf.ln(10)
+
+    if sales.exists():
+        pdf.set_font('Arial', 'B', 12)
+        pdf.cell(0, 10, "Vendas Realizadas:", ln=True)
+        pdf.set_font('Arial', '', 12)
+
+        for sale in sales:
+            pdf.cell(0, 10, f"- Produto: {sale.product.name}, Quantidade: {sale.sale_quantity}, Total: {sale.sale_quantity * sale.product.price:.2f}", ln=True)
+    else:
+        pdf.cell(0, 10, "Nenhuma venda realizada nesta data.", ln=True)
+
+    # Salva o PDF em memória e retorna como resposta
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = f'inline; filename="relatorio_{employee.name}_{report_date.strftime("%Y%m%d")}.pdf"'
+    pdf.output(response)
+    return response

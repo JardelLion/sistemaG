@@ -10,6 +10,8 @@ from .views import CartItemsView
 from .views import TotalProductValueView
 from .views import employee_notifications, mark_as_read
 from .views import StockReferenceViewSet
+from .views import generate_employee_report
+
 
 router = DefaultRouter()
 
@@ -19,6 +21,8 @@ router.register(r'sales', SaleViewSet, basename="sales")
 router.register(r'aggregate-sales-by-date', AggregateSalesByDateViewSet, basename='aggregate-sales-by-date')
 router.register(r'sales-by-employee', SalesByEmployee, basename='sales-by-employee')
 router.register(r'create-stock', StockReferenceViewSet, basename='create a stock')
+
+
 
 # Inclui as URLs do router
 urlpatterns = [
@@ -37,5 +41,6 @@ urlpatterns = [
     path('total-product-value/', TotalProductValueView.as_view(), name='total-stock-value'),
     path('notifications/', employee_notifications, name='employee_notifications'),
     path('api/notifications/<uuid:notification_id>/read/', mark_as_read, name='mark_as_read'),
+    path('generate-report/', generate_employee_report, name='generate_employee_report'),
 
 ]
