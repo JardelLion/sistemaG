@@ -793,12 +793,11 @@ def mark_as_read(request, notification_id):
     return Response(serializer.data)
 
 
-
-
 from django.http import HttpResponse, JsonResponse
 from fpdf import FPDF
 from .models import Sale
 from datetime import datetime
+
 
 class PDF(FPDF):
     def header(self):
@@ -809,6 +808,7 @@ class PDF(FPDF):
         self.set_y(-15)
         self.set_font('Arial', 'I', 8)
         self.cell(0, 10, f'Página {self.page_no()}', 0, 0, 'C')
+
 
 def generate_employee_report(request):
     # Obtém os parâmetros de ID e data
@@ -848,12 +848,19 @@ def generate_employee_report(request):
         pdf.set_font('Arial', '', 12)
 
         for sale in sales:
-            pdf.cell(0, 10, f"- Produto: {sale.product.name}, Quantidade: {sale.sale_quantity}, Total: {sale.sale_quantity * sale.product.price:.2f}", ln=True)
+            pdf.cell(0, 10,
+                     f"- Produto: {sale.product.name}, Quantidade: {sale.sale_quantity}, Total: {sale.sale_quantity * sale.product.price:.2f}",
+                     ln=True)
     else:
         pdf.cell(0, 10, "Nenhuma venda realizada nesta data.", ln=True)
 
     # Salva o PDF em memória e retorna como resposta
     response = HttpResponse(content_type='application/pdf')
-    response['Content-Disposition'] = f'inline; filename="relatorio_{employee.name}_{report_date.strftime("%Y%m%d")}.pdf"'
-    pdf.output(response)
+    response[
+        'Content-Disposition'] = f'inline; filename="relatorio_{employee.name}_{report_date.strftime("%Y%m%d")}.pdf"'
+
+    # Gerando e escrevendo o PDF no objeto de resposta
+    pdf_output = pdf.output(dest='S').encode('latin1')
+    response.write(pdf_output)
+
     return response
