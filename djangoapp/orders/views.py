@@ -792,75 +792,107 @@ def mark_as_read(request, notification_id):
     serializer = NotificationSerializer(notification)
     return Response(serializer.data)
 
-
 from django.http import HttpResponse, JsonResponse
 from fpdf import FPDF
-from .models import Sale
 from datetime import datetime
+from .models import Sale
 
 
 class PDF(FPDF):
     def header(self):
+        # Logotipo (substitua 'path/to/logo.png' pelo caminho do seu logotipo)
+        self.image('https://www.google.com/url?sa=i&url=https%3A%2F%2Fseekvectors.com%2Fpost%2Fimg-vector-logo&psig=AOvVaw0s2mDXYulUzs-tRKKDHHUc&ust=1736094791731000&source=images&cd=vfe&opi=89978449&ved=0CBQQjRxqFwoTCPidsp2_3IoDFQAAAAAdAAAAABAE', 10, 8, 33)
+        # Nome da empresa
         self.set_font('Arial', 'B', 12)
-        self.cell(0, 10, 'Relatório do Funcionário', 0, 1, 'C')
+        self.cell(0, 10, 'YourCompany', ln=True, align='R')
+        self.set_font('Arial', '', 10)
+        self.cell(0, 5, '250 Executive Park Blvd, Suite 3400', ln=True, align='R')
+        self.cell(0, 5, 'San Francisco CA 94134, United States', ln=True, align='R')
+        self.ln(20)
 
     def footer(self):
+        # Rodapé
         self.set_y(-15)
         self.set_font('Arial', 'I', 8)
-        self.cell(0, 10, f'Página {self.page_no()}', 0, 0, 'C')
+        self.cell(0, 10, f'Página {self.page_no()} | YourCompany - http://www.example.com', align='C')
+
+    def add_invoice_details(self, invoice_number, invoice_date, due_date):
+        self.set_font('Arial', 'B', 12)
+        self.cell(0, 10, f"Invoice {invoice_number}", ln=True)
+        self.set_font('Arial', '', 10)
+        self.cell(0, 6, f"Invoice Date: {invoice_date}", ln=True)
+        self.cell(0, 6, f"Due Date: {due_date}", ln=True)
+        self.ln(10)
+
+    def add_client_details(self, client_name, client_address):
+        self.set_font('Arial', 'B', 12)
+        self.cell(0, 10, client_name, ln=True)
+        self.set_font('Arial', '', 10)
+        for line in client_address:
+            self.cell(0, 6, line, ln=True)
+        self.ln(10)
+
+    def add_table(self, data):
+        self.set_font('Arial', 'B', 10)
+        self.cell(60, 10, 'Description', border=1, align='C')
+        self.cell(30, 10, 'Quantity', border=1, align='C')
+        self.cell(40, 10, 'Unit Price', border=1, align='C')
+        self.cell(30, 10, 'Taxes', border=1, align='C')
+        self.cell(30, 10, 'Amount', border=1, align='C')
+        self.ln()
+        self.set_font('Arial', '', 10)
+
+        for row in data:
+            self.cell(60, 10, row['description'], border=1)
+            self.cell(30, 10, str(row['quantity']), border=1, align='C')
+            self.cell(40, 10, f"${row['unit_price']:.2f}", border=1, align='C')
+            self.cell(30, 10, row['tax'], border=1, align='C')
+            self.cell(30, 10, f"${row['amount']:.2f}", border=1, align='C')
+            self.ln()
+
+    def add_totals(self, untaxed, tax, total):
+        self.ln(10)
+        self.set_font('Arial', 'B', 10)
+        self.cell(160, 10, 'Untaxed Amount', border=0, align='R')
+        self.cell(30, 10, f"${untaxed:.2f}", border=0, align='C')
+        self.ln()
+        self.cell(160, 10, 'Tax 15%', border=0, align='R')
+        self.cell(30, 10, f"${tax:.2f}", border=0, align='C')
+        self.ln()
+        self.cell(160, 10, 'Total', border=0, align='R')
+        self.cell(30, 10, f"${total:.2f}", border=0, align='C')
 
 
 def generate_employee_report(request):
-    # Obtém os parâmetros de ID e data
-    employee_id = request.GET.get('id')
-    report_date = request.GET.get('date')
+    # Exemplo de dados (substitua com os valores reais do banco)
+    invoice_number = "INV/2020/00001"
+    invoice_date = "07/08/2020"
+    due_date = "08/07/2020"
+    client_name = "Deco Addict"
+    client_address = [
+        "77 Santa Barbara Rd",
+        "Pleasant Hill CA 94523",
+        "United States"
+    ]
+    sales_data = [
+        {"description": "Three-Seat Sofa", "quantity": 5, "unit_price": 1500, "tax": "15%", "amount": 7500},
+        {"description": "Four Person Desk", "quantity": 5, "unit_price": 2350, "tax": "15%", "amount": 11750},
+    ]
 
-    if not employee_id or not report_date:
-        return JsonResponse({'error': "Os parâmetros 'id' e 'date' são obrigatórios."}, status=400)
+    untaxed_amount = sum(item['amount'] for item in sales_data)
+    tax_amount = untaxed_amount * 0.15
+    total_amount = untaxed_amount + tax_amount
 
-    # Valida o ID do funcionário
-    try:
-        employee = Employee.objects.get(id=employee_id)
-    except Employee.DoesNotExist:
-        return JsonResponse({'error': "Funcionário não encontrado."}, status=404)
-
-    # Converte a data para o formato correto
-    try:
-        report_date = datetime.strptime(report_date, '%Y-%m-%d')
-    except ValueError:
-        return JsonResponse({'error': "Formato de data inválido. Use 'YYYY-MM-DD'."}, status=400)
-
-    # Busca as vendas do funcionário na data
-    sales = Sale.objects.filter(employee=employee, date=report_date)
-
-    # Gera o PDF
     pdf = PDF()
     pdf.add_page()
-    pdf.set_font('Arial', '', 12)
+    pdf.add_invoice_details(invoice_number, invoice_date, due_date)
+    pdf.add_client_details(client_name, client_address)
+    pdf.add_table(sales_data)
+    pdf.add_totals(untaxed_amount, tax_amount, total_amount)
 
-    pdf.cell(0, 10, f"Funcionário: {employee.name}", ln=True)
-    pdf.cell(0, 10, f"Relatório para a data: {report_date.strftime('%d/%m/%Y')}", ln=True)
-    pdf.ln(10)
-
-    if sales.exists():
-        pdf.set_font('Arial', 'B', 12)
-        pdf.cell(0, 10, "Vendas Realizadas:", ln=True)
-        pdf.set_font('Arial', '', 12)
-
-        for sale in sales:
-            pdf.cell(0, 10,
-                     f"- Produto: {sale.product.name}, Quantidade: {sale.sale_quantity}, Total: {sale.sale_quantity * sale.product.price:.2f}",
-                     ln=True)
-    else:
-        pdf.cell(0, 10, "Nenhuma venda realizada nesta data.", ln=True)
-
-    # Salva o PDF em memória e retorna como resposta
+    # Gera o PDF e retorna como resposta
     response = HttpResponse(content_type='application/pdf')
-    response[
-        'Content-Disposition'] = f'inline; filename="relatorio_{employee.name}_{report_date.strftime("%Y%m%d")}.pdf"'
-
-    # Gerando e escrevendo o PDF no objeto de resposta
-    pdf_output = pdf.output(dest='S').encode('latin1')
-    response.write(pdf_output)
+    response['Content-Disposition'] = f'inline; filename="{invoice_number}.pdf"'
+    response.write(pdf.output(dest='S').encode('latin1'))
 
     return response
