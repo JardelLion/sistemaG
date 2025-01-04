@@ -801,7 +801,7 @@ from .models import Sale
 class PDF(FPDF):
     def header(self):
         # Logotipo (substitua 'path/to/logo.png' pelo caminho do seu logotipo)
-        self.image('https://www.google.com/url?sa=i&url=https%3A%2F%2Fseekvectors.com%2Fpost%2Fimg-vector-logo&psig=AOvVaw0s2mDXYulUzs-tRKKDHHUc&ust=1736094791731000&source=images&cd=vfe&opi=89978449&ved=0CBQQjRxqFwoTCPidsp2_3IoDFQAAAAAdAAAAABAE', 10, 8, 33)
+        #self.image('https://www.google.com/url?sa=i&url=https%3A%2F%2Fseekvectors.com%2Fpost%2Fimg-vector-logo&psig=AOvVaw0s2mDXYulUzs-tRKKDHHUc&ust=1736094791731000&source=images&cd=vfe&opi=89978449&ved=0CBQQjRxqFwoTCPidsp2_3IoDFQAAAAAdAAAAABAE', 10, 8, 33)
         # Nome da empresa
         self.set_font('Arial', 'B', 12)
         self.cell(0, 10, 'YourCompany', ln=True, align='R')
