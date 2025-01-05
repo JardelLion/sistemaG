@@ -27,7 +27,7 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['sistemag.onrender.com', 'localhost', '127.0.0.1', '[::1]',
                  'http://localhost:3000',
-                 'http://localhost:3001',]
+                 'http://localhost:3001','https://sistemafrontend.onrender.com']
 
 
 # Application definition
@@ -115,7 +115,8 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 CORS_ALLOWED_ORIGINS = [
    "https://sistemag.onrender.com",
     'http://localhost:3000',
-    'http://localhost:3001'
+    'http://localhost:3001',
+    'https://sistemafrontend.onrender.com'
 ]
 
 # allow the specific method to use
