@@ -59,29 +59,17 @@ class ProductViewSet(viewsets.ModelViewSet):
     
     @action(detail=False, methods=['post'], url_path='create')
     def create_product(self, request):
-       
-        
-        # Serialização dos dados da requisição
         serializer = self.get_serializer(data=request.data)
-        
-        # Verificar se os dados são válidos
         if serializer.is_valid():
-            # Salvar o produto após validação
             product = serializer.save()
-            
-            # Capturar os dados da requisição
             data = request.data
-            
-            # Verificar se o campo 'acquisition_value' está presente
             acquisition_value = data.get("acquisition_value")
             product_quantity = data.get('quantity')
             stock_reference_id = StockReference.objects.filter(is_active=True).first()
-
             if acquisition_value is not None:
-                # Criar o histórico do produto
                 ProductHistory.objects.create(
-                    product_id=product.id,  # Usar a instância do produto
-                    acquisition_value=acquisition_value,  # Valor de aquisição vindo da requisição
+                    product_id=product.id,
+                    acquisition_value=acquisition_value,
                     product_quantity=product_quantity,
                     stock_reference_id=stock_reference_id.id
                 )
@@ -95,51 +83,36 @@ class ProductViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['PUT'], url_path='update')
     def update_product(self, request, pk=None):
         try:
-            # Recupera o produto usando o pk fornecido
             product = Product.objects.get(pk=pk)
-            
-            # Tenta recuperar o histórico do produto, se existir
             product_history = ProductHistory.objects.get(product_id=product)
-
         except Product.DoesNotExist:
             return Response({'error': 'Produto não encontrado'}, status=status.HTTP_404_NOT_FOUND)
         except ProductHistory.DoesNotExist:
-            # Se não houver histórico, criamos um novo
             product_history = ProductHistory(product_id=product)
 
-        # Atualize os dados do produto
         data = request.data
         product.name = data.get('name', product.name)
         product.price = data.get('price', product.price)
         product.description = data.get('description', product.description)
         product.quantity = (product.quantity + int(data.get('quantity', product.quantity)))
         product.acquisition_value = data.get("acquisition_value", product.acquisition_value)
-
-        # Salva as alterações no produto
         product.save()
 
-        # Atualiza o valor de aquisição no histórico
         acquisition_value = data.get('acquisition_value')
         if acquisition_value is not None:
             product_history.acquisition_value = acquisition_value
         else:
             product_history.acquisition_value = product.acquisition_value  # Mantenha o valor atual se não houver novo
 
-
-        # Atualiza o valor de quantidade no histórico
         quantity = data.get('quantity')
         if quantity is not None:
             product_history.product_quantity = (product_history.product_quantity + int(quantity))
         else:
             product_history.product_quantity = product.quantity  # Mantenha o valor atual se não houver novo
 
-        # Salva as alterações no histórico
         product_history.save()
-
-        # Serializa e retorna os dados do produto atualizado
         serializer = self.get_serializer(product)
         return Response(serializer.data, status=status.HTTP_200_OK)
-    
 
 class StockReferenceViewSet(ModelViewSet):
     queryset = StockReference.objects.all()
@@ -148,15 +121,9 @@ class StockReferenceViewSet(ModelViewSet):
     @action(detail=True, methods=['post'], url_path='activate')
     def activate(self, request, pk=None):
         instance = self.get_object()
-
-        # Desativa todos os registros com is_active=True
         StockReference.objects.filter(is_active=True).update(is_active=False)
-
-        # Ativa apenas o registro atual
         instance.is_active = True
         instance.save()
-
-        # Serializa e retorna a resposta
         serializer = self.get_serializer(instance)
         return Response(serializer.data, status=status.HTTP_200_OK)
     
@@ -170,16 +137,11 @@ class StockReferenceViewSet(ModelViewSet):
         except StockReference.DoesNotExist:
             return Response({'detail': f'Stock with id {pk} does not exist.'}, status=status.HTTP_404_NOT_FOUND)
 
-
     @action(detail=True, methods=['post'], url_path='deactivate')
     def deactivate(self, request, pk=None):
         instance = self.get_object()
-
-        # Desativa apenas o registro atual
         instance.is_active = False
         instance.save()
-
-        # Serializa e retorna a resposta
         serializer = self.get_serializer(instance)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -190,30 +152,21 @@ class StockManagerViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def list(self, request, *args, **kwargs):
-        # Obtém todos os objetos de Stock ordenados pelo nome do produto
         stock_items = Stock.objects.filter(stock_reference__is_active=True).select_related('product').order_by('product__name')
-
-
-        # Cria uma lista personalizada com os detalhes que deseja retornar
         custom_data = []
         for item in stock_items:
             custom_data.append({
                 'product_id': item.product.id,
-                'product_name': item.product.name,  # Acessa o nome do produto
+                'product_name': item.product.name,
                 'price': item.product.price,
                 'quantity': item.quantity,
-                'is_available': item.available,  # Quantidade no estoque
-                'responsible_user': item.responsible_user.name,  # Acessa o nome do responsável
+                'is_available': item.available,
+                'responsible_user': item.responsible_user.name,
             })
-
-        # Retorna a resposta com os dados customizados
         return Response(custom_data)
     def create(self, request, *args, **kwargs):
-        # Verifica se o usuário está autenticado
         if not request.user.is_authenticated:
             return Response({"error": "você precisa estar autenticado para realizar esta ação."}, status=status.HTTP_403_FORBIDDEN)
-
-        # Obtém o funcionário associado ao usuário autenticado
         try:
             employee = Employee.objects.get(user=request.user)
         except Employee.DoesNotExist:

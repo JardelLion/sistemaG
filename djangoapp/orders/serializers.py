@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from .models import Sale, Stock, Cart, CartItem, Product, Notification
+from rest_framework.exceptions import ValidationError
 
 class ProductSerializer(serializers.ModelSerializer):
     description = serializers.CharField(required=False)
@@ -7,7 +8,6 @@ class ProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
         fields = "__all__"
-
 
 class CartItemSerializer(serializers.ModelSerializer):
     product_name = serializers.ReadOnlyField(source='product.name')

@@ -7,6 +7,9 @@ from django.core.exceptions import ValidationError
 import re
 from django.contrib.auth.models import User
 
+from djangoapp.orders.models import StockReference
+
+
 # Create your models here.
 
 class Employee(models.Model):
@@ -71,6 +74,7 @@ class EmployeeHistory(models.Model):
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     employee = models.ForeignKey(Employee, on_delete=models.SET_NULL, null=True, blank=True, related_name="employee_history" )
+    stock_reference = models.ForeignKey(StockReference, on_delete=models.SET_NULL, null=True,related_name='stock_reference')
     name = models.CharField(max_length=100)
     contact = models.CharField(max_length=15)
     address = models.TextField()
