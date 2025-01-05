@@ -7,7 +7,7 @@ from django.core.exceptions import ValidationError
 import re
 from django.contrib.auth.models import User
 
-from djangoapp.orders.models import StockReference
+from orders.models import StockReference
 
 
 # Create your models here.
