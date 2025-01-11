@@ -33,7 +33,8 @@ class EmployeeViewSet(viewsets.ModelViewSet):
                 'contact': employee['contact'],
                 'address': employee['address'],
                 'username': employee['username'] if is_admin else None,
-                'role': employee['role']
+                'role': employee['role'],
+                'stock_reference': employee['stock_reference']
             }
             for employee in serializer.data #if employee['role'] == 'employee' 
         ]

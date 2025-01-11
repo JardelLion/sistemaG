@@ -18,8 +18,7 @@ class Employee(models.Model):
     
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="employee")
-    stock_reference = models.ForeignKey('orders.StockReference', on_delete=models.SET_NULL, null=True,related_name='stock_reference')
-
+    stock_reference = models.ForeignKey('orders.StockReference', on_delete=models.CASCADE,related_name='employee_stock_reference')
     name = models.CharField(max_length=100)
     contact = models.CharField(max_length=15)
     address = models.TextField()
@@ -77,6 +76,7 @@ class EmployeeHistory(models.Model):
     employee = models.ForeignKey(Employee, on_delete=models.SET_NULL, null=True, blank=True, related_name="employee_history" )
     name = models.CharField(max_length=100)
     contact = models.CharField(max_length=15)
+    stock_reference = models.ForeignKey('orders.StockReference', on_delete=models.CASCADE,related_name='employee_history_stock_reference')
     address = models.TextField()
     role = models.CharField(max_length=100, choices=MOVEMENT_CHOICES)
     timestamp = models.DateTimeField(auto_now_add=True)

@@ -12,11 +12,12 @@ class EmployeeSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Employee
-        fields = ['id', 'name', 'username', 'email', 'contact', 'address', 'role', 'password']
+        fields = ['id', 'name', 'username', 'email', 'contact', 'address', 'role', 'password', 'stock_reference']
         extra_kwargs = {
             'email': {'required': True},
             'contact': {'required': True},
-            'password': {'write_only': True}
+            'password': {'write_only': True},
+            'stock_reference': {"required": True}
         }
 
     def validate_email(self, value):
@@ -55,7 +56,8 @@ class EmployeeSerializer(serializers.ModelSerializer):
             name=employee.name,  # Acessa o nome do Employee
             contact=employee.contact,  # Acessa o contato do Employee
             address=employee.address,  # Acessa o endereço do Employee
-            role=employee.role  # Acessa o cargo do Employee
+            role=employee.role, # Acessa o cargo do Employee
+            stock_reference=employee.stock_reference
         )
 
         return employee
