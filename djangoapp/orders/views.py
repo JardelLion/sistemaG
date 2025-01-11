@@ -842,8 +842,8 @@ def generate_employee_report(request):
 
         # Dados do empregado (assumindo que todos têm os mesmos dados básicos)
         employee = sales_history.first().employee
-        client_name = employee.employee_name
-        client_address = [employee.employee_address]
+        client_name = employee.name
+        client_address = [employee.address]
 
         # Dados da venda
         sales_data = []
