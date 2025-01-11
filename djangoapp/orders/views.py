@@ -817,37 +817,88 @@ class PDF(FPDF):
         self.cell(30, 10, f"${total:.2f}", border=0, align='C')
 
 
+
+from django.http import HttpResponse
+
 def generate_employee_report(request):
-    # Exemplo de dados (substitua com os valores reais do banco)
-    invoice_number = "INV/2020/00001"
-    invoice_date = "07/08/2020"
-    due_date = "08/07/2020"
-    client_name = "Deco Addict"
-    client_address = [
-        "77 Santa Barbara Rd",
-        "Pleasant Hill CA 94523",
-        "United States"
-    ]
-    sales_data = [
-        {"description": "Three-Seat Sofa", "quantity": 5, "unit_price": 1500, "tax": "15%", "amount": 7500},
-        {"description": "Four Person Desk", "quantity": 5, "unit_price": 2350, "tax": "15%", "amount": 11750},
-    ]
+    # Obtém os parâmetros da requisição (id do empregado e data)
+    employee_id = request.GET.get('id')
+    report_date = request.GET.get('date')
 
-    untaxed_amount = sum(item['amount'] for item in sales_data)
-    tax_amount = untaxed_amount * 0.15
-    total_amount = untaxed_amount + tax_amount
+    try:
+        # Busca os dados do histórico de vendas filtrados por empregado e data
+        sales_history = SaleHistory.objects.filter(
+            employee_id=employee_id,
+            date=report_date
+        )
 
-    pdf = PDF()
-    pdf.add_page()
-    pdf.add_invoice_details(invoice_number, invoice_date, due_date)
-    pdf.add_client_details(client_name, client_address)
-    pdf.add_table(sales_data)
-    pdf.add_totals(untaxed_amount, tax_amount, total_amount)
+        # Verifica se há vendas para gerar o relatório
+        if not sales_history.exists():
+            return HttpResponse(
+                "Nenhum dado encontrado para o relatório.",
+                status=404,
+                content_type='text/plain'
+            )
 
-    # Gera o PDF e retorna como resposta
-    response = HttpResponse(content_type='application/pdf')
-    response['Content-Disposition'] = f'inline; filename="{invoice_number}.pdf"'
-    response['X-Status'] = 'true'
-    response.write(pdf.output(dest='S').encode('latin1'))
+        # Dados do empregado (assumindo que todos têm os mesmos dados básicos)
+        employee = sales_history.first().employee
+        client_name = employee.employee_name
+        client_address = [employee.employee_address]
 
-    return response
+        # Dados da venda
+        sales_data = []
+        for sale in sales_history:
+            # Cálculo do valor total (amount) e do imposto (tax)
+            amount = float(sale.product_price) * sale.sale_quantity
+            tax = amount * 0.15  # 15% de imposto
+
+            # Adiciona os dados da venda à lista de vendas
+            sales_data.append({
+                "description": sale.product_name,
+                "quantity": sale.sale_quantity,
+                "unit_price": float(sale.product_price),
+                "tax": "15%",  # Exemplo de imposto fixo
+                "amount": amount,
+            })
+
+        # Calcula os totais
+        untaxed_amount = sum(item['amount'] for item in sales_data)
+        tax_amount = untaxed_amount * 0.15
+        total_amount = untaxed_amount + tax_amount
+
+        # Gera o PDF mantendo o formato original
+        pdf = PDF()
+        pdf.add_page()
+
+        # Adiciona os detalhes da fatura
+        pdf.add_invoice_details(
+            invoice_number=f"EMP-{employee_id}-{datetime.now().strftime('%Y%m%d')}",
+            invoice_date=datetime.now().strftime('%d/%m/%Y'),
+            due_date=datetime.now().strftime('%d/%m/%Y')
+        )
+
+        # Adiciona os dados do cliente
+        pdf.add_client_details(client_name, client_address)
+
+        # Adiciona os dados da tabela de vendas
+        pdf.add_table(sales_data)
+
+        # Adiciona os totais de venda
+        pdf.add_totals(untaxed_amount, tax_amount, total_amount)
+
+        # Gera o PDF e retorna como resposta
+        response = HttpResponse(content_type='application/pdf')
+        response['Content-Disposition'] = f'inline; filename="Report-{employee_id}.pdf"'
+        response['X-Status'] = 'true'  # Adiciona o cabeçalho indicando sucesso
+        response.write(pdf.output(dest='S').encode('latin1'))
+        return response
+
+    except Exception as e:
+        # Trata erros e adiciona o status false
+        response = HttpResponse(
+            f"Erro ao gerar o relatório: {str(e)}",
+            status=500,
+            content_type='text/plain'
+        )
+        response['X-Status'] = 'false'
+        return response
