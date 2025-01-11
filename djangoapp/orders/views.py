@@ -847,6 +847,7 @@ def generate_employee_report(request):
     # Gera o PDF e retorna como resposta
     response = HttpResponse(content_type='application/pdf')
     response['Content-Disposition'] = f'inline; filename="{invoice_number}.pdf"'
+    response['X-Status'] = 'true'
     response.write(pdf.output(dest='S').encode('latin1'))
 
     return response
