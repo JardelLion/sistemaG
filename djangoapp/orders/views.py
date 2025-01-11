@@ -118,6 +118,12 @@ class StockReferenceViewSet(ModelViewSet):
     queryset = StockReference.objects.all()
     serializer_class = StockReferenceSerializer
 
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.queryset
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
     @action(detail=True, methods=['post'], url_path='activate')
     def activate(self, request, pk=None):
         instance = self.get_object()

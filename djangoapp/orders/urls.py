@@ -21,6 +21,7 @@ router.register(r'sales', SaleViewSet, basename="sales")
 router.register(r'aggregate-sales-by-date', AggregateSalesByDateViewSet, basename='aggregate-sales-by-date')
 router.register(r'sales-by-employee', SalesByEmployee, basename='sales-by-employee')
 router.register(r'create-stock', StockReferenceViewSet, basename='create a stock')
+router.register(r'stock-references', StockReferenceViewSet, basename='stockreference')
 
 
 
