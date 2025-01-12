@@ -913,7 +913,7 @@ def generate_employee_report(request):
 
 
 def receipt_sale(request):
-   
+    
     sale_id = request.GET.get('sale_id')
     
 
@@ -996,6 +996,8 @@ def receipt_sale(request):
 
 
 class UpdateEmployeeSector(APIView):
+    permission_classes = [IsAuthenticated]
+
     def put(self, request, employee_id):
         try:
             employee = Employee.objects.get(id=employee_id)
