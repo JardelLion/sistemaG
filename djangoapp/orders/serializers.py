@@ -3,18 +3,18 @@ from .models import Sale, Stock, Cart, CartItem, Product, Notification
 from rest_framework.exceptions import ValidationError
 
 class ProductSerializer(serializers.ModelSerializer):
-    description = serializers.CharField(required=False)
-
     class Meta:
         model = Product
         fields = "__all__"
+        read_only_fields = ['stock_reference']  # Torna o campo somente leitura para evitar exigência no payload
 
     def create(self, validated_data):
-        # Associar automaticamente ao estoque ativo
+        # Busca o estoque ativo
         active_stock_reference = StockReference.objects.filter(is_active=True).first()
         if not active_stock_reference:
-            raise serializers.ValidationError("No active stock reference found.")
+            raise serializers.ValidationError({"stock_reference": "No active stock reference found."})
         
+        # Associa o estoque ativo ao produto
         validated_data['stock_reference'] = active_stock_reference
         return super().create(validated_data)
 
