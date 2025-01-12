@@ -45,6 +45,6 @@ urlpatterns = [
     path('notifications/', employee_notifications, name='employee_notifications'),
     path('api/notifications/<uuid:notification_id>/read/', mark_as_read, name='mark_as_read'),
     path('generate-report/', generate_employee_report, name='generate_employee_report'),
-    path('employee/<int:employee_id>/sector', UpdateEmployeeSector.as_view(), name='update-employee-sector'),
+    path('employee/<uuid:employee_id>/sector', UpdateEmployeeSector.as_view(), name='update-employee-sector'),
 
 ]
