@@ -1002,15 +1002,21 @@ class UpdateEmployeeSector(APIView):
         except Employee.DoesNotExist:
             return Response({"error": "Funcionário não encontrado"}, status=status.HTTP_404_NOT_FOUND)
         
-        sector = request.data.get('sector')
-        if not sector:
-            return Response({"error": "O setor é obrigatório"}, status=status.HTTP_400_BAD_REQUEST)
+        sector_id = request.data.get('sector')  # Recebendo o ID do setor
+
+        if not sector_id:
+            return Response({"error": "O ID do setor é obrigatório"}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            # Buscando o StockReference correspondente ao setor
+            sector = StockReference.objects.get(id=sector_id)
+        except StockReference.DoesNotExist:
+            return Response({"error": "Setor não encontrado"}, status=status.HTTP_404_NOT_FOUND)
         
-        # Atualiza o stock_reference do funcionário
+        # Atualizando o campo stock_reference do funcionário
         employee.stock_reference = sector
         employee.save()
-        
-        # Retorna a resposta de sucesso
+
         return Response({
-            "message": f"Setor do funcionário {employee_id} atualizado para: {sector}"
+            "message": f"Setor do funcionário {employee_id} atualizado para: {sector.name}"
         }, status=status.HTTP_200_OK)
