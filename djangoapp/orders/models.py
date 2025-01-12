@@ -10,8 +10,20 @@ from django.shortcuts import get_object_or_404
 from django.http import HttpResponse
     
 # Create your models here.
+class StockReference(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    name = models.CharField(max_length=255, unique=True)  # Nome do estoque
+    description = models.TextField(blank=True, null=True)  # Descrição opcional
+    is_active = models.BooleanField(null=False, default=False)
+    created_at = models.DateTimeField(auto_now_add=True)  # Data de criação
+    updated_at = models.DateTimeField(auto_now=True)  # Última atualização
+
+    def __str__(self):
+        return self.name
+
 class Product(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    stock_reference = models.ForeignKey(StockReference, on_delete=models.CASCADE) 
     name = models.CharField(max_length=255)
     description = models.CharField(max_length=255, unique=True)
     price = models.DecimalField(max_digits=10, decimal_places=2)
@@ -24,16 +36,6 @@ class Product(models.Model):
         return self.name
     
 
-class StockReference(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    name = models.CharField(max_length=255, unique=True)  # Nome do estoque
-    description = models.TextField(blank=True, null=True)  # Descrição opcional
-    is_active = models.BooleanField(null=False, default=False)
-    created_at = models.DateTimeField(auto_now_add=True)  # Data de criação
-    updated_at = models.DateTimeField(auto_now=True)  # Última atualização
-
-    def __str__(self):
-        return self.name
 
     
 class ProductHistory(models.Model):

@@ -22,32 +22,34 @@ class ProductViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def list(self, request, *args, **kwargs):
-        queryset = self.get_queryset().order_by('name')
+        # Filtrar produtos apenas com stock_reference ativo
+        active_stock_reference = StockReference.objects.filter(is_active=True).first()
+        queryset = Product.objects.filter(stock_reference=active_stock_reference).order_by('name')
         serializer = self.get_serializer(queryset, many=True)
 
-        # Para cada produto, buscar a quantidade no próprio produto e o valor de aquisição
+        # Para cada produto, adicionar quantidade e valor de aquisição
         filtered_products = []
         for product in serializer.data:
             try:
-                # Aqui estamos pegando a quantidade do próprio produto
+                # Obter instância do produto
                 product_instance = Product.objects.get(id=product['id'])
-                product_quantity = product_instance.quantity  # Quantidade no próprio produto
-                acquisition_value = product_instance.acquisition_value  # Valor de aquisição do produto
+                product_quantity = product_instance.quantity
+                acquisition_value = product_instance.acquisition_value
             except Product.DoesNotExist:
-                product_quantity = 0  # Caso o produto não tenha uma quantidade definida
-                acquisition_value = 0.00  # Valor de aquisição padrão
+                product_quantity = 0
+                acquisition_value = 0.00
 
             filtered_products.append({
                 'id': product['id'],
                 'name': product['name'],
                 'description': product['description'],
-                'quantity': product_quantity,  # Quantidade no próprio produto
-                'acquisition_value': acquisition_value,  # Valor de aquisição
+                'quantity': product_quantity,
+                'acquisition_value': acquisition_value,
                 'price': product['price']
             })
 
         return Response(filtered_products)
-    
+
      # Desabilitar os métodos padrão de criação, atualização e deleção
     
     
@@ -60,25 +62,41 @@ class ProductViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['post'], url_path='create')
     def create_product(self, request):
         serializer = self.get_serializer(data=request.data)
+
         if serializer.is_valid():
-            product = serializer.save()
+            # Verificar se existe um stock_reference ativo
+            active_stock_reference = StockReference.objects.filter(is_active=True).first()
+            if not active_stock_reference:
+                return Response(
+                    {'error': 'No active stock reference found.'}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # Salvar o produto e associá-lo ao estoque ativo
+            product = serializer.save(stock_reference=active_stock_reference)
             data = request.data
             acquisition_value = data.get("acquisition_value")
-            product_quantity = data.get('quantity')
-            stock_reference_id = StockReference.objects.filter(is_active=True).first()
+            product_quantity = data.get('quantity', 0)  # Valor padrão: 0
+
             if acquisition_value is not None:
+                # Criar um histórico do produto
                 ProductHistory.objects.create(
                     product_id=product.id,
                     acquisition_value=acquisition_value,
                     product_quantity=product_quantity,
-                    stock_reference_id=stock_reference_id.id
+                    stock_reference_id=active_stock_reference.id
                 )
             else:
-                return Response({'error': 'Acquisition value is required.'}, status=status.HTTP_400_BAD_REQUEST)
+                return Response(
+                    {'error': 'Acquisition value is required.'}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
 
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
 
     @action(detail=True, methods=['PUT'], url_path='update')
     def update_product(self, request, pk=None):
