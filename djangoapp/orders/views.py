@@ -119,10 +119,13 @@ class StockReferenceViewSet(ModelViewSet):
     serializer_class = StockReferenceSerializer
 
 
+    
     def list(self, request, *args, **kwargs):
         queryset = self.queryset
-        serializer = self.get_serializer(queryset, many=True)
+        serializer = self.serializer_class(queryset, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+    
+
 
     @action(detail=True, methods=['post'], url_path='activate')
     def activate(self, request, pk=None):
@@ -895,6 +898,90 @@ def generate_employee_report(request):
         # Gera o PDF e retorna como resposta
         response = HttpResponse(content_type='application/pdf')
         response['Content-Disposition'] = f'inline; filename="Report-{employee_id}.pdf"'
+        response['X-Status'] = 'true'  # Adiciona o cabeçalho indicando sucesso
+        response.write(pdf.output(dest='S').encode('latin1'))
+        return response
+
+    except Exception as e:
+        # Trata erros e adiciona o status false
+        response = HttpResponse(
+            f"Erro ao gerar o relatório: {str(e)}",
+            status=500,
+            content_type='text/plain'
+        )
+        response['X-Status'] = 'false'
+        return response
+
+
+
+def receipt_sale(request):
+   
+    sale_id = request.GET.get('sale_id')
+    
+
+    try:
+        # Busca os dados do histórico de vendas filtrados por empregado e data
+        sales_history = SaleHistory.objects.filter(
+            sale_id=sale_id
+        )
+
+        # Verifica se há vendas para gerar o relatório
+        if not sales_history.exists():
+            return HttpResponse(
+                "Nenhum dado encontrado para o relatório.",
+                status=404,
+                content_type='text/plain'
+            )
+
+        # Dados do empregado (assumindo que todos têm os mesmos dados básicos)
+        employee = sales_history.first().employee
+        client_name = employee.name
+        client_address = [employee.address]
+
+        # Dados da venda
+        sales_data = []
+        for sale in sales_history:
+            # Cálculo do valor total (amount) e do imposto (tax)
+            amount = float(sale.product_price) * sale.sale_quantity
+            tax = amount * 0.15  # 15% de imposto
+
+            # Adiciona os dados da venda à lista de vendas
+            sales_data.append({
+                "description": sale.product_name,
+                "quantity": sale.sale_quantity,
+                "unit_price": float(sale.product_price),
+                "tax": "15%",  # Exemplo de imposto fixo
+                "amount": amount,
+            })
+
+        # Calcula os totais
+        untaxed_amount = sum(item['amount'] for item in sales_data)
+        tax_amount = untaxed_amount * 0.15
+        total_amount = untaxed_amount + tax_amount
+
+        # Gera o PDF mantendo o formato original
+        pdf = PDF()
+        pdf.add_page()
+
+        # Adiciona os detalhes da fatura
+        pdf.add_invoice_details(
+            invoice_number=f"EMP-{sale_id}-{datetime.now().strftime('%Y%m%d')}",
+            invoice_date=datetime.now().strftime('%d/%m/%Y'),
+            due_date=datetime.now().strftime('%d/%m/%Y')
+        )
+
+        # Adiciona os dados do cliente
+        pdf.add_client_details(client_name, client_address)
+
+        # Adiciona os dados da tabela de vendas
+        pdf.add_table(sales_data)
+
+        # Adiciona os totais de venda
+        pdf.add_totals(untaxed_amount, tax_amount, total_amount)
+
+        # Gera o PDF e retorna como resposta
+        response = HttpResponse(content_type='application/pdf')
+        response['Content-Disposition'] = f'inline; filename="Report-{sale_id}.pdf"'
         response['X-Status'] = 'true'  # Adiciona o cabeçalho indicando sucesso
         response.write(pdf.output(dest='S').encode('latin1'))
         return response
