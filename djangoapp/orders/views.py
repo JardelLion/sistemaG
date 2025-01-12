@@ -117,8 +117,6 @@ class ProductViewSet(viewsets.ModelViewSet):
 class StockReferenceViewSet(ModelViewSet):
     queryset = StockReference.objects.all()
     serializer_class = StockReferenceSerializer
-
-
     
     def list(self, request, *args, **kwargs):
         queryset = self.queryset
@@ -995,3 +993,24 @@ def receipt_sale(request):
         )
         response['X-Status'] = 'false'
         return response
+
+
+class UpdateEmployeeSector(APIView):
+    def put(self, request, employee_id):
+        try:
+            employee = Employee.objects.get(id=employee_id)
+        except Employee.DoesNotExist:
+            return Response({"error": "Funcionário não encontrado"}, status=status.HTTP_404_NOT_FOUND)
+        
+        sector = request.data.get('sector')
+        if not sector:
+            return Response({"error": "O setor é obrigatório"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Atualiza o stock_reference do funcionário
+        employee.stock_reference = sector
+        employee.save()
+        
+        # Retorna a resposta de sucesso
+        return Response({
+            "message": f"Setor do funcionário {employee_id} atualizado para: {sector}"
+        }, status=status.HTTP_200_OK)

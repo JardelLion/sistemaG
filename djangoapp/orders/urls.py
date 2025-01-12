@@ -11,6 +11,8 @@ from .views import TotalProductValueView
 from .views import employee_notifications, mark_as_read
 from .views import StockReferenceViewSet
 from .views import generate_employee_report
+from .views import UpdateEmployeeSector
+
 
 
 router = DefaultRouter()
@@ -43,5 +45,6 @@ urlpatterns = [
     path('notifications/', employee_notifications, name='employee_notifications'),
     path('api/notifications/<uuid:notification_id>/read/', mark_as_read, name='mark_as_read'),
     path('generate-report/', generate_employee_report, name='generate_employee_report'),
+    path('api/employee/<int:employee_id>/sector', UpdateEmployeeSector.as_view(), name='update-employee-sector'),
 
 ]
