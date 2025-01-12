@@ -9,11 +9,14 @@ class ProductSerializer(serializers.ModelSerializer):
         model = Product
         fields = "__all__"
 
-        def create(self, validated_data):
-            # Associar automaticamente ao estoque ativo
-            active_stock_reference = StockReference.objects.filter(is_active=True).first()
-            validated_data['stock_reference'] = active_stock_reference
-            return super().create(validated_data)
+    def create(self, validated_data):
+        # Associar automaticamente ao estoque ativo
+        active_stock_reference = StockReference.objects.filter(is_active=True).first()
+        if not active_stock_reference:
+            raise serializers.ValidationError("No active stock reference found.")
+        
+        validated_data['stock_reference'] = active_stock_reference
+        return super().create(validated_data)
 
 class CartItemSerializer(serializers.ModelSerializer):
     product_name = serializers.ReadOnlyField(source='product.name')
